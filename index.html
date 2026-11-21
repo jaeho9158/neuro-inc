@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEURO INC. — 알츠하이머 치료제 개발</title>
+<style>
+:root{--sea:#0a1220;--land:#1c2a3a;--panel:#111c2c;--panel2:#182740;--line:#2b3d55;--line2:#34496a;--green:#3fe08a;--red:#e0242b;--blue:#3da5ff;--amber:#ffb454;--txt:#eef4fb;--dim:#8da2ba}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--sea);color:var(--txt);font:600 15px/1.45 "Noto Sans KR","Malgun Gothic",system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+button:disabled{opacity:.4;cursor:not-allowed}
+b,.b{font-weight:800}
+#game{position:fixed;inset:0}
+#brain{position:absolute;left:150px;right:290px;top:78px;bottom:100px;width:auto;height:auto}@media (max-width:860px){#brain{left:0;right:0;top:90px;bottom:200px}}
+/* HUD */
+#hudL{position:absolute;left:14px;top:12px;display:flex;align-items:center;gap:12px;z-index:3}
+.rp{width:76px;height:76px;border-radius:50%;background:#0f1d2e;border:5px solid var(--green);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.rp b{font-size:24px;color:var(--green)}.rp small{font-size:10px;color:var(--dim);margin-top:3px}
+#date{font-size:13px;color:var(--dim)}#date b{display:block;font-size:20px;color:var(--txt)}
+#hudTop{position:absolute;left:50%;top:12px;transform:translateX(-50%);display:flex;gap:10px;z-index:3;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 520px)}
+.gz{background:var(--panel);border:3px solid var(--line);border-radius:14px;padding:6px 12px;min-width:140px}
+.gz .l{font-size:11px;color:var(--dim);display:flex;justify-content:space-between;gap:8px}
+.gz .l b{color:var(--txt);font-size:13px}
+.gz .bar{height:8px;background:#0a1220;border-radius:5px;overflow:hidden;margin-top:4px}.gz .bar i{display:block;height:100%;transition:width .25s}
+#hudR{position:absolute;right:12px;top:12px;width:272px;z-index:3;background:var(--panel);border:3px solid var(--line);border-radius:18px;padding:12px 14px;max-height:calc(100% - 190px);overflow:auto}
+#hudR h4{margin:0 0 6px;font-size:13px;color:var(--green);display:flex;justify-content:space-between;align-items:center}
+.st{margin:7px 0}.st .l{display:flex;justify-content:space-between;font-size:12.5px}.st .l span{color:var(--dim)}.st .bar{height:7px;background:#0a1220;border-radius:4px;margin-top:3px;overflow:hidden}.st .bar i{display:block;height:100%;background:var(--blue);transition:width .25s}
+.st small{display:block;color:var(--dim);font-size:11px;font-weight:600}
+.pop{animation:pop .35s}@keyframes pop{40%{transform:scale(1.35);color:#fff}}
+.spk{position:fixed;width:6px;height:6px;border-radius:50%;background:var(--green);z-index:60;pointer-events:none;animation:spk .7s ease-out forwards}@keyframes spk{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+.card{animation:cin .22s ease-out}@keyframes cin{from{transform:translateY(14px) scale(.97);opacity:0}}
+.nd{transition:transform .15s,border-color .15s}.nd:hover{transform:scale(1.1)}.rbtn,.btn,.ch{transition:transform .12s,filter .12s}.rbtn:hover,.btn:hover,.ch:hover{transform:translateY(-2px);filter:brightness(1.12)}
+#news{animation:tk .5s}@keyframes tk{from{opacity:0;transform:translateX(16px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.fu{animation:fu 1.2s}.fd{animation:fd 1.2s}@keyframes fu{from{background:#3fe08a55}}@keyframes fd{from{background:#ffb45466}}
+#doseBox{margin-top:10px;padding-top:10px;border-top:3px solid var(--line)}
+input[type=range]{width:100%;accent-color:var(--green)}
+details{margin-top:8px;font-size:12px;color:var(--dim)}summary{cursor:pointer}
+#mats{position:absolute;left:14px;top:100px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.mat{background:var(--panel);border:3px solid var(--line);border-radius:12px;padding:3px 10px;font-size:13px;display:flex;gap:8px;align-items:center}
+.matH{font-size:12px;font-weight:800;color:var(--green);line-height:1.2}.matH small{color:var(--dim);font-weight:600;font-size:10.5px}.mat i{font-style:normal;color:var(--dim);font-size:11px}
+/* bottom */
+#bottom{position:absolute;left:0;right:0;bottom:46px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 14px 8px;z-index:3;pointer-events:none}
+#bottom>*{pointer-events:auto}
+#cats{display:flex;align-items:flex-end;gap:12px}
+.rbtn{width:64px;height:64px;border-radius:50%;border:5px solid var(--green);background:#0f1d2e;color:var(--green);font-weight:900;font-size:24px;display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1;position:relative}
+.rbtn small{font-size:10px;font-weight:700;margin-top:2px}
+.rbtn:hover{background:#15304a}
+.rbtn.sm{width:44px;height:44px;border-width:4px;font-size:16px}
+.rbtn.on{background:var(--green);color:#05301a}
+.evolve{width:104px;height:104px;border-radius:50%;background:var(--green);border:7px solid #b9ffd5;color:#05301a;font-weight:900;font-size:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.evolve small{font-size:11px;font-weight:800}
+.evolve.pulse{animation:pl 1.6s infinite}@keyframes pl{50%{box-shadow:0 0 0 12px #3fe08a33}}
+#goal{position:absolute;left:50%;top:104px;transform:translateX(-50%);z-index:3;max-width:min(560px,calc(100% - 560px));background:var(--panel);border:3px solid var(--green);border-radius:14px;padding:7px 14px;font-size:13.5px;text-align:center;line-height:1.45}
+#goal b{color:var(--green)}#goal .w{color:#ff8f8f;font-weight:800}
+#danger{position:fixed;inset:0;pointer-events:none;z-index:2;box-shadow:inset 0 0 0 0 #e0242b;transition:box-shadow .5s}#danger.on{animation:dg 1.2s infinite}@keyframes dg{50%{box-shadow:inset 0 0 90px 10px #e0242b66}}
+@media (max-width:860px){#goal{top:auto;bottom:196px;max-width:calc(100% - 24px);font-size:12.5px}}
+#hint{display:none!important}#hint0{position:absolute;left:14px;bottom:128px;z-index:3;max-width:330px;background:var(--panel);border:3px solid var(--amber);border-radius:16px;padding:8px 12px;font-size:13px;display:none}
+#hint b{color:var(--amber)}#hint .x{position:absolute;right:8px;top:2px;color:var(--dim);font-size:16px}
+#pipe{display:flex;gap:8px;align-items:stretch}
+.slot{width:150px;min-height:58px;background:var(--panel);border:3px dashed var(--line);border-radius:14px;padding:6px 10px;font-size:12px;cursor:pointer}
+.slot.run{border-style:solid;border-color:var(--blue)}
+.slot .pb{height:7px;background:#0a1220;border-radius:4px;margin:5px 0;overflow:hidden}.slot .pb i{display:block;height:100%;background:var(--blue)}
+.slot.empty{color:var(--dim);display:flex;align-items:center;justify-content:center;cursor:default}
+.slot .w{color:var(--amber)}
+#speed{display:flex;gap:8px;align-items:center}
+#ticker{position:absolute;left:0;right:0;bottom:0;height:46px;background:#0a1220;border-top:4px solid var(--red);display:flex;align-items:center;gap:12px;padding:0 16px;z-index:4;overflow:hidden}
+#ticker .tag{background:var(--red);color:#fff;font-size:12px;font-weight:900;border-radius:8px;padding:2px 9px;flex:none}
+#news{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+#mute{flex:none;color:var(--dim);font-size:12px}
+/* overlays */
+.ov{position:fixed;inset:0;background:#050a12dd;display:none;align-items:center;justify-content:center;z-index:20;padding:12px}
+.ov.show{display:flex}
+.card{background:var(--panel);border:3px solid var(--line);border-radius:22px;max-width:640px;width:100%;max-height:calc(100% - 20px);overflow:auto}
+.card .in{padding:20px 24px}
+.card.red{border-color:var(--red)}.card .hd{background:var(--red);color:#fff;font-weight:900;padding:10px 24px;font-size:15px;letter-spacing:.02em}
+.card h2{margin:0 0 8px;font-size:24px}
+.ch{display:block;width:100%;text-align:left;background:var(--panel2);border:3px solid var(--line2);border-radius:16px;padding:10px 16px;margin:8px 0}
+.ch:hover{border-color:var(--green)}.ch small{display:block;color:var(--dim);font-weight:600;font-size:12.5px}
+.pills{display:flex;gap:8px;margin:8px 0}
+.pill{border:4px solid var(--line2);border-radius:30px;padding:5px 18px;font-weight:800;color:var(--dim)}
+.pill.on{background:var(--green);border-color:var(--green);color:#05301a}
+.co{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--panel2);border:3px solid var(--line2);border-radius:18px;padding:12px 16px;margin:8px 0}
+.co:hover{border-color:var(--green)}
+.co .ic{flex:none;width:52px;height:52px;border-radius:50%;border:4px solid var(--green);color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px}
+.co small{display:block;color:var(--dim);font-weight:600;font-size:12.5px}
+.btn{background:var(--green);color:#05301a;border-radius:14px;padding:9px 22px;font-weight:900}
+.btn.gh{background:none;border:3px solid var(--line2);color:var(--txt)}
+.dim{color:var(--dim)}.good{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}
+.logo{font-size:44px;font-weight:900;letter-spacing:.02em;line-height:1}.logo i{font-style:normal;color:var(--red)}
+/* evolve screen */
+#evo{max-width:1020px;width:100%;height:min(640px,calc(100% - 10px));display:flex;flex-direction:column;background:var(--panel);border:3px solid var(--line);border-radius:22px;overflow:hidden}
+#evoTop{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:3px solid var(--line);flex-wrap:wrap}
+#evoTop .sp{flex:1}
+#treeWrap{flex:1;overflow:auto;position:relative;background:var(--sea)}
+#tree{position:relative}#tree svg{position:absolute;left:0;top:0;pointer-events:none}
+.nd{position:absolute;width:64px;height:64px;border-radius:50%;border:4px solid #3a4a5e;background:#162233;color:#6f8299;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center}
+.nd svg,.rbtn svg{pointer-events:none}.nd .nm{position:absolute;top:70px;left:50%;transform:translateX(-50%);width:100px;text-align:center;font-size:11px;font-weight:700;color:var(--dim);line-height:1.2}
+.nd.buy{border-color:var(--amber);background:#2a2112;color:var(--amber)}
+.nd.own{border-color:var(--green);background:#0f3a24;color:var(--green);box-shadow:0 0 0 5px #3fe08a33,0 0 22px #3fe08a}
+.nd.run{border-color:var(--blue);color:var(--blue);animation:pl2 1.4s infinite}@keyframes pl2{50%{box-shadow:0 0 0 8px #3da5ff33}}
+.nd.sel{outline:4px solid #fff;outline-offset:3px}
+.nd.x{border-color:var(--red);color:var(--red);opacity:.5}
+.cost{position:absolute;right:-12px;bottom:-8px;background:var(--amber);color:#2a1a00;border-radius:12px;padding:1px 7px;font-size:11px;font-weight:900}
+#evoBot{display:flex;gap:16px;padding:12px 18px;border-top:3px solid var(--line);align-items:stretch;flex-wrap:wrap}
+#desc{flex:1;min-width:260px;font-size:13px}#desc h3{margin:0 0 4px;font-size:18px}
+#desc .g{color:var(--green)}#desc .r{color:var(--amber)}
+#evoGo{align-self:center}
+.legend{position:absolute;left:14px;top:372px;font-size:11px;color:var(--dim);z-index:2;max-width:180px;pointer-events:none}
+#banner{position:absolute;left:50%;top:96px;transform:translateX(-50%);background:var(--green);color:#05301a;padding:6px 18px;border-radius:20px;font-weight:900;display:none;z-index:6}
+.bub{cursor:pointer}
+.hl{outline:4px solid #fff;outline-offset:3px;position:relative;z-index:9;border-radius:14px}
+#coach{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);width:min(560px,94vw);background:var(--panel);border:4px solid #fff;border-radius:20px;padding:14px 18px;z-index:30;display:none}
+#coach p{margin:6px 0}#coach .nav{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:8px}
+.rule{background:var(--sea);border-radius:12px;padding:8px 12px;font-size:12.5px;margin:8px 0;color:var(--dim)}
+.rule b{color:var(--txt)}
+.tl{margin:6px 0;padding:8px 12px;border-radius:12px;background:var(--panel2);font-size:13px;border-left:6px solid var(--line2)}
+.tl.g{border-left-color:var(--green)}.tl.b{border-left-color:var(--red)}
+@media(max-width:860px){
+ #hudTop{left:96px;transform:none;max-width:calc(100% - 110px);justify-content:flex-start}
+ .gz{min-width:100px;padding:4px 8px}
+ #hudR{top:auto;bottom:178px;width:calc(100% - 24px);max-height:150px;right:12px}
+ #mats{top:96px}
+ #bottom{flex-wrap:wrap;gap:6px}
+ .slot{width:100px}
+ .rbtn{width:52px;height:52px;font-size:19px}.evolve{width:84px;height:84px;font-size:14px}
+ #hint{bottom:260px}.legend{display:none}
+}
+</style>
+</head>
+<body>
+<div id="game">
+  <svg id="brain" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="hudL"><div class="rp"><b id="rp">0</b><small>연구점수</small></div><div id="date"></div></div>
+  <div id="hudTop"></div>
+  <div id="mats"></div>
+  <div class="legend">빨간 원 = 나쁜 단백질 <b>타우</b>(숫자는 농도)<br>주황 점 = <b>아밀로이드</b> 찌꺼기</div>
+  <div id="banner"></div>
+  <div id="hudR"><h4>지금 약의 성능 <span class="dim" style="font-weight:600">마우스를 올리면 설명</span></h4><div id="stats"></div>
+    <div id="doseBox"><div class="st"><div class="l"><span>투여량 (약을 얼마나 줄까)</span><b id="doseV"></b></div></div>
+      <input id="dose" type="range" min="0" max="10" step="0.5">
+      <small class="dim" style="font-size:11px">많이 줄수록 찌꺼기는 빨리 지워지지만 <b class="warn">부작용(뇌 부종·출혈)</b> 위험도 올라가요.</small></div>
+    <button id="x4" class="btn" style="margin-top:8px;width:100%;display:none">조기 개입 (1회)</button>
+    <details><summary>자세한 수치 보기</summary><div id="raw"></div></details></div>
+  <div id="goal"></div><div id="danger"></div><div id="hint"><span class="x" id="hintX">×</span><div id="hintT"></div></div>
+  <div id="bottom">
+    <div id="cats">
+      <button class="evolve pulse" id="bEvo">개발<small>EVOLVE</small></button>
+      <button class="rbtn" data-t="A"></button>
+      <button class="rbtn" data-t="B"></button>
+      <button class="rbtn" data-t="C"></button>
+    </div>
+    <div id="pipe"></div>
+    <div id="speed"><button class="rbtn sm" id="bHelp" title="도움말">?</button><button class="rbtn sm" id="bPause">II</button><button class="rbtn sm" data-sp="1">1x</button><button class="rbtn sm" data-sp="2">2x</button></div>
+  </div>
+  <div id="ticker"><span class="tag">속보</span><span id="news"></span><button id="mute">소리 켬</button></div>
+</div>
+
+<div class="ov show" id="start"><div class="card"><div class="in">
+  <div class="logo">NEURO <i>INC.</i></div>
+  <p style="font-size:16px;margin:10px 0 4px">알츠하이머 신약 개발팀장이 되어 환자의 뇌를 지키는 게임입니다. 뇌 속에서 타우라는 나쁜 단백질이 조금씩 퍼지고 있습니다. 더 나은 약을 만들어 퍼지는 속도를 늦추세요. 모르는 용어는 게임 중에 하나씩 설명해 드립니다.</p>
+  <div class="rule"><b>이기려면</b> 3년(게임 속 156초) 동안 환자 기억력 50% 이상을 지키고 아밀로이드를 20 아래로 낮추세요.<br><b>지는 경우</b> 타우가 감각운동피질에 닿거나, 신뢰도가 0이 되거나, 기억력이 25% 아래로 떨어질 때입니다.<br><b>조작</b> 마우스로 누르고, 스페이스바로 멈춥니다. 멈춘 동안 천천히 생각해도 됩니다.</div>
+  <b>난이도</b><div class="pills" id="diffs"></div>
+  <b>제약사</b> <span class="dim" style="font-weight:600">(처음이면 맨 위)</span><div id="cos"></div>
+  <p class="dim" style="font-size:12px;margin:8px 0 0">수치는 교육용으로 단순화한 값이며 실제 치료 판단의 근거가 아닙니다. 연구 항목의 실제 사례는 2026.11 학회 자료 기준(일부 중간 결과·추정치 포함).</p>
+</div></div></div>
+<div class="ov" id="brief"><div class="card"><div class="in" id="briefBox"></div></div></div>
+<div id="coach"></div>
+<div class="ov" id="evoOv"><div id="evo">
+  <div id="evoTop"><b style="font-size:18px">약 개발 트리</b><div class="pills" id="evoTabs" style="margin:0"></div><span class="sp"></span><span id="evoRp" class="b good"></span><button class="rbtn sm" id="evoX">×</button></div>
+  <div id="treeWrap"><div id="tree"></div></div>
+  <div id="evoBot"><div id="desc"><span class="dim">동그라미를 눌러 설명을 보세요. <b class="warn">주황</b>=지금 살 수 있음, <b class="good">초록</b>=보유, 회색=잠김</span></div><button class="btn" id="evoGo" disabled>개발하기</button></div>
+</div></div>
+<div class="ov" id="pick"><div class="card"><div class="in" id="pickBox"></div></div></div>
+<div class="ov" id="event"><div class="card red"><div class="hd" id="evHd">긴급 상황</div><div class="in" id="evBox"></div></div></div>
+<div class="ov" id="end"><div class="card"><div class="in" id="endBox"></div></div></div>
+
+<script id="engine">
+// ===================== ENGINE (렌더러와 분리, 헤드리스 테스트 대상) =====================
+var K = {
+  WEEKS_PER_SEC: 1, TOTAL_WEEKS: 156, SHUTTLE_BONUS: 4.5, ANTIBODY_POLARITY: 3.0,
+  SPREAD_RATE: 0.03, TAU_PENALTY: 0.6, ARIA_BASE: 0.012, APOE_RISK: 1.3, ARIA_EXP: 1.3, C_REF: 10,
+  BUBBLES: false, RP_BASE: 3.0, ATOM_RATE: 0, ATOM_W: {C:.3,H:.3,O:.2,N:.2}, ATOM_CAP: 40,
+  BUBBLE_EVERY: [6,14], BUBBLE_TTL: 4, BUBBLE_RP: 6, SYNTH_SEC_PER_RP: 0.6, PIPE_SLOTS: 3,
+  CLEAR_K: 0.06, AMY_START: 50, AMY_GROWTH: 0.003, COG_K: 0.0055, COHORT: 40,
+  TAU_THRESHOLD: 30, LOSE_TAU: 50, CATALYST_N: 2
+};
+var N = function(id,tree,name,rp,atoms,dH,req,reqAny,excl,mods,g,t,c){
+  return {id:id,tree:tree,name:name,cost:Object.assign({rp:rp},atoms),dH:dH,req:req,reqAny:reqAny,excl:excl,mods:mods,gain:g,tradeoff:t,concept:c};
+};
+var NODES = [
+ N('A1','A','지질친화성 조정 (logP ↑)',8,{C:6,H:8},-1,[],[],[],{add:{logP:.6},mul:{}},'logP +0.6','수용성 −10%','비극성 영역이 클수록 지질막 통과가 쉬워진다'),
+ N('A2','A','수소결합 주개 감소 (HBD ↓)',10,{O:4},-1,['A1'],[],[],{add:{HBD:-1},mul:{Kd:1.15}},'HBD −1','K_d ×1.15 (결합력 ↓)','떼어낼 수소결합이 적을수록 막을 넘기 쉽다'),
+ N('A3','A','극성 표면적 감소 (TPSA ↓)',12,{N:3,O:3},1,['A1'],[],[],{add:{TPSA:-20,plasmaBind:.08},mul:{}},'TPSA −20 → 뇌 도달률 ↑','혈장단백 결합 +8% → 유리약물 ↓','극성이 클수록 막 지질과의 상호작용이 불리해진다'),
+ N('A4','A','분자량 축소 (MW ↓)',14,{C:10},1,['A2'],[],[],{add:{},mul:{MW:.8,Kd:1.25}},'MW ×0.8','K_d ×1.25 (접촉 면적 ↓)','작을수록 통과는 쉬우나 결합력이 줄어든다'),
+ N('A5','A','P-gp 유출 회피',16,{C:8,H:6},-1,['A3'],[],[],{add:{},mul:{retention:1.35}},'뇌 내 잔류율 +35%','—','통과해도 다시 퍼내는 수송체가 있다'),
+ N('A6','A','Transferrin receptor shuttle',40,{C:20,H:24,N:8,O:10},-1,['A3','C3'],[],[],{add:{bbb:4.5},mul:{aria:.35},flag:{shuttle:1}},'bbbScore +4.5, ARIA 위험 ×0.35','연구비가 매우 크다 · 실제 셔틀 항체는 주입반응(45~50%)·빈혈(10~18%) 신호가 보고됨','TfR1 셔틀(2+1 이중특이 항체)로 크기·극성의 한계를 우회. 실제 trontinemab은 3상 진행 중(미허가, 2026.11 기준)'),
+ N('A7','A','SC 제형 전환',18,{H:6,O:4},1,[],['A6','B2'],[],{add:{},mul:{rp:1.25}},'rpRate +25%','—','피하주사(SC) 제형으로 투여 편의 ↑. 레카네맙 SC는 2026.07 미국 승인, 국내 미승인이며 ARIA를 줄인다는 근거는 없음'),
+ N('B1','B','protofibril 선택성',10,{C:8,N:4},-1,[],[],[],{add:{},mul:{tau:.8,clear:.9}},'타우 확산 −20%','plaque 제거 −10%','가용성 응집체를 먼저 잡는 전략 (lecanemab 계열)'),
+ N('B2','B','plaque 선택성',10,{C:8,O:4},-1,[],[],[],{add:{},mul:{clear:1.35,aria:1.3}},'plaque 제거 +35%','ARIA 위험 ×1.3 (도나네맙 ARIA-E 약 24% vs 레카네맙 12.6%)','침착된 플라크(N3pG)를 직접 제거하고, 제거 후 투약을 멈추는 한정 기간 치료 (donanemab 계열, 국내 미허가). 제거 후 중단해도 12~18개월간 약 18% 둔화가 이어졌으나, 76주에 제거 기준을 못 채워 계속 투여한 군은 ARIA-E 24.2%·ARIA-H 37.6%로 더 높았음 (사후 분석)'),
+ N('B3','B','친화도 강화 (K_d ↓)',15,{N:6,O:4},-1,[],['B1','B2'],[],{add:{},mul:{Kd:.5}},'K_d ×0.5','—','같은 농도에서 결합률이 올라간다, 평형상수의 의미'),
+ N('B4','B','pyroglutamate-Aβ 표적화',18,{C:10,N:5},1,['B2'],[],[],{add:{},mul:{clear:1.25}},'성숙 plaque 제거 +25%','—','변형된 N 말단을 노리는 선택성'),
+ N('B5','B','Fc 조작 (microglia 활성 ↑)',20,{C:12,H:10},-1,['B3'],[],['B6'],{add:{},mul:{clear:1.3,aria:1.4}},'clearRate ×1.3','ariaRisk ×1.4','면역세포를 끌어들이면 제거는 빠르나 혈관 염증이 커진다'),
+ N('B6','B','Fc 사일싱',20,{C:12,O:6},1,['B3'],[],['B5'],{add:{},mul:{aria:.7,clear:.85}},'ariaRisk ×0.7','clearRate ×0.85','B5와 배타, 둘 중 하나만'),
+ N('B7','B','anti-tau 병용',45,{C:18,H:20,N:10,O:8},-1,['B3','C4'],[],[],{add:{},mul:{tau:.55}},'타우 확산속도 −45%','연구비가 매우 크다','플라크를 걷어 낸 뒤에도 타우·염증은 이어지는 smoldering disease라 아밀로이드만으로는 부족하다 (MTBR-tau 표적 항체 등 개발 중)'),
+ N('C1','C','정기 MRI 모니터링',8,{},0,[],[],[],{add:{},mul:{trustDmg:.4},flag:{mri:1}},'ARIA 조기 발견, 신뢰도 피해 ×0.4','RP만 사용','무증상 ARIA는 MRI로만 보인다. 안전성 MRI는 3·5·7·14·26회 투여 전, ARIA는 첫 3~6개월에 집중. 실사용 연구(62명, 탐색적)에서는 기저 혈장 C3가 낮을수록 ARIA 위험이 높았음'),
+ N('C2','C','ApoE4 유전형 검사',10,{},0,[],[],[],{add:{},mul:{},flag:{apoe:1}},'동형접합 고위험군을 미리 가려 ARIA 위험 가산(×1.3) 제거','RP만 사용','ARIA-E 발생률은 ApoE4 비보인자 5.4% · 이형 10.9% · 동형 32.6% (CLARITY AD). 다만 ARIA-E의 59%는 동형접합이 아닌 환자에서 생겨 유전형만으로는 위험을 다 가려내지 못함'),
+ N('C3','C','혈장 pTau217 바이오마커',12,{},0,['C1'],[],[],{add:{braakShift:1},mul:{rp:1.1}},'시작 Braak 단계 −1, rpRate +10%','RP만 사용','혈액 p-tau217로 조기 진단·선별(진단 정확도 약 90% 이상, 이중 절단값을 쓰면 회색지대(보통 약 20~40%, 지침 목표는 20% 이하)만 PET·뇌척수액으로 확인). 같은 p-tau217도 키트(항체)마다 절단값이 약 7배 달라 검증이 필요함. 1차 진료에서는 p-tau181로 배제하고 양성·회색지대는 메모리 클리닉으로 보내는 흐름이 제안됨. 국내 혈장 검사 허가 여부는 자료마다 달라 이 게임에서는 단정하지 않음'),
+ N('C4','C','단계적 증량 (titration)',14,{},0,['C1'],[],[],{add:{},mul:{aria:.65},flag:{titration:1}},'ariaRisk ×0.65','초기 26주 clearRate −20%','용량을 천천히 올리면 혈관이 적응할 시간을 번다. 도나네맙 점진 증량은 ARIA-E를 약 24%→15%로 낮춤 (무작위 비교)'),
+ N('C5','C','투약 일시중단 프로토콜',12,{},0,['C4'],[],[],{add:{},mul:{},flag:{autoReduce:1}},'ARIA 발생 시 자동 감량, 피해 ×0.5','RP만 사용','멈추는 것도 치료 전략이다. 무증상·경도·안정이면 관찰, 증상이 있거나 중등도 이상이면 중단. ARIA-E는 3~4개월 안에 소실되는지 MRI로 확인하고 재개, ARIA-H(미세출혈)는 더 늘지 않는지(안정화) 확인'),
+ N('C6','C','규제 패스트트랙',20,{},0,['C3'],[],[],{add:{},mul:{rp:1.2}},'rpRate +20%','RP만 사용','—'),
+ N('C7','C','환자 등록 확대',16,{},0,['C6'],[],[],{add:{},mul:{rp:1.3,aria:1.15}},'rpRate +30%','ARIA 이벤트 빈도 +15%','규모가 커지면 드문 부작용까지 드러난다')
+];
+var NODE = {}; NODES.forEach(function(n){NODE[n.id]=n;});
+var COMBOS = [
+ {id:'X1',name:'BBB 투과 최적화',req:['A2','A3'],mods:{add:{bbb:1.2},mul:{}}},
+ {id:'X2',name:'저용량 고효율 요법',req:['A6','C4'],mods:{add:{},mul:{aria:.6}}},
+ {id:'X3',name:'소분자 전환',req:['A4','B3'],mods:{add:{bbb:3.0},mul:{clear:.5}},warn:true},
+ {id:'X4',name:'조기 개입',req:['B2','C3'],mods:{add:{},mul:{}},flag:{earlyIntervention:1}},
+ {id:'X5',name:'이중 표적 셔틀',req:['A6','B7'],mods:{add:{},mul:{tau:.75}}}
+];
+var COMPANIES = {
+ antibody_house:{name:'Antibody House',desc:'결합력 ★★★★★ · B 트리 비용 −20% · 첫 플레이 추천',mods:{add:{bbb:-1.0},mul:{Kd:.7,aria:1.2}},base:'ab',discount:{tree:'B',f:.8}},
+ shuttle_lab:{name:'Shuttle Lab',desc:'BBB 기술 ★★★★★ · A6 비용 −40%, A6 선행 C3 면제 (쉬움)',mods:{add:{},mul:{rp:.8}},base:'ab',discount:{id:'A6',f:.6},exempt:{A6:'C3'}},
+ small_lab:{name:'Small-Molecule Lab',desc:'시작 약물이 소분자, 질병 수정 효과 낮음 (하드)',mods:{add:{},mul:{clear:.3}},base:'sm'}
+};
+var BASE_AB = {type:'ab',MW:148000,logP:0,HBD:0,TPSA:0,Kd:0.25,retention:.7,plasmaBind:.1,bbb:0,aria:1,clear:1,rp:1,tau:1,trustDmg:1,braakShift:0};
+var BASE_SM = {type:'sm',MW:379,logP:4.1,HBD:0,TPSA:38.8,Kd:0.25,retention:.7,plasmaBind:.1,bbb:0,aria:1,clear:1,rp:1,tau:1,trustDmg:1,braakShift:0};
+var X3_SM = {type:'sm',MW:450,logP:3.2,HBD:1,TPSA:60};
+var REGIONS = [
+ {id:'ento',ko:'내후각피질',braak:1,w:.10,to:['hippo'],xy:[232,232],tau:55},
+ {id:'hippo',ko:'해마',braak:2,w:.18,to:['amyg'],xy:[200,210],tau:35},
+ {id:'amyg',ko:'편도체',braak:3,w:.10,to:['itc'],xy:[255,213],tau:10},
+ {id:'itc',ko:'하측두엽',braak:4,w:.14,to:['assoc','pfc'],xy:[130,205],tau:0},
+ {id:'assoc',ko:'두정 연합',braak:5,w:.16,to:['occ','sm'],xy:[205,105],tau:0},
+ {id:'pfc',ko:'전두엽',braak:5,w:.16,to:['sm'],xy:[325,135],tau:0},
+ {id:'occ',ko:'후두엽',braak:6,w:.08,to:[],xy:[100,125],tau:0},
+ {id:'sm',ko:'감각운동피질',braak:6,w:.08,to:[],xy:[264,100],tau:0}
+];
+
+// ---- 상황 변수: 코호트(환자 유형) · 난이도 · 이벤트 ----
+K.EVENT_GAP=[14,24];
+var PROFILES={
+ early:{ko:'초기 단계 코호트',brief:'타우가 내후각·해마에 머물고 제거 반응이 좋은 환자들. 아밀로이드를 공격적으로 걷어내는 쪽이 유리하다.',risk:1.2,clear:1.1,spread:1,amy:45,tau:{ento:38,hippo:12,amyg:0}},
+ apoe4:{ko:'APOE4 고위험 코호트',brief:'아밀로이드 부담이 크고 ARIA에 매우 취약한 환자들. 유전형 선별·MRI·점진 증량이 핵심이고, 강한 제거 전략은 위험하다.',risk:3.2,clear:1,spread:1,amy:70,tau:{}},
+ advanced:{ko:'진행 단계 코호트',brief:'타우가 이미 변연계·측두엽까지 퍼졌고 제거 반응이 약한 환자들. 아밀로이드만으로는 부족하다, 항타우와 시간 싸움.',risk:1.2,clear:.9,spread:1.15,amy:45,tau:{ento:65,hippo:50,amyg:28,itc:10}}
+};
+var DIFF={easy:{ko:'쉬움',aria:.8,spread:.8,rival:190},normal:{ko:'보통',aria:1,spread:1,rival:135},hard:{ko:'어려움',aria:1.25,spread:1.2,rival:105}};
+function amyAvg(st){return st.regions.reduce(function(s,r){return s+r.amy;},0)/8;}
+function rawApoe4(st){return st.profile==='apoe4'&&!st.drug.flags.apoe;}
+var EVENTS=[
+ {id:'aria_case',min:8,max:110,ok:function(st){return st.ariaCount>=1;},
+  title:'첫 ARIA 사례',text:'투약 중인 환자 한 명에서 ARIA 소견이 보고됐습니다. 임상 현장이 당신의 대응을 기다립니다.',
+  ch:[{l:'투약 중단 + MRI 확인',d:'용량 50% 감량, 신뢰도 소폭 회복'},{l:'용량 20% 감량 후 관찰',d:'균형안'},{l:'프로토콜 유지',d:'제거 속도 유지, 위험 감수'}],
+  best:function(st){return rawApoe4(st)?0:(st.drug.flags.mri?1:0);},
+  why:function(st,b){return b===0?'APOE4 고위험이거나 MRI로 확인할 수 없으면, 일단 멈추고 영상으로 확인하는 것이 안전합니다.':'MRI로 모니터링 중이고 증상이 경미하면 감량 후 관찰이 표준입니다 (무증상·경도·안정이면 관찰).';},
+  act:function(st,i){
+   if(i===0){st.dose=Math.max(1,st.dose*.5);st.trust+=st.drug.flags.mri?8:3;return '용량을 절반으로 줄이고 MRI를 확인했습니다.';}
+   if(i===1){st.dose=Math.max(1,st.dose*.8);st.trust+=2;return '용량을 20% 줄이고 추적합니다.';}
+   var r=rawApoe4(st);st.trust-=r?14:3;st.rp+=10;return r?'APOE4 환자에서 추가 사례가 나와 신뢰도가 크게 떨어졌습니다.':'큰 문제 없이 지나갔지만 신뢰도가 조금 깎였습니다.';}},
+ {id:'rival_data',min:25,max:95,ok:function(){return true;},
+  title:'경쟁사 임상 결과 발표',text:'경쟁사가 3상 중간 결과를 학회에서 공개했습니다. 시장의 시선이 쏠립니다.',
+  ch:[{l:'우리 데이터를 조기 공개',d:'경쟁사 진척 −12. 데이터가 약하면 역풍'},{l:'안전성 데이터 보강',d:'신뢰도 +5, 경쟁은 그대로'},{l:'연구비 증액·가속',d:'RP +40, 6개월간 ARIA 위험 ×1.25'}],
+  best:function(st){return st.cognition>=85?0:(st.trust<70?1:2);},
+  why:function(st,b){return b===0?'인지 기능이 잘 유지되고 있어 데이터가 강합니다, 먼저 공개하면 유리합니다.':b===1?'신뢰도가 낮은 때에 서두르면 안전성 우려가 커집니다. 안전성 근거부터 쌓으세요.':'데이터도 신뢰도도 어중간하면 자원을 늘려 속도를 내는 편이 낫습니다.';},
+  act:function(st,i){
+   if(i===0){if(st.cognition>=85){st.rival=Math.max(0,st.rival-12);st.trust+=3;return '선점 성공, 경쟁사 진척을 늦췄습니다.';}st.trust-=10;return '데이터가 약해 역풍을 맞았습니다.';}
+   if(i===1){st.trust+=5;return '안전성 근거를 보강했습니다.';}
+   st.rp+=40;st.ariaBuff={mul:1.25,until:st.week+26};return '자원을 늘렸지만 6개월간 ARIA 위험이 올라갑니다.';}},
+ {id:'fast_approval',min:55,max:125,ok:function(st){return amyAvg(st)<48;},
+  title:'규제당국 조건부 승인 제안',text:'규제당국이 확증 시험을 조건으로 가속(조건부) 승인을 제안했습니다.',
+  ch:[{l:'조건부 승인 수락',d:'RP +30, 신뢰도 +10, 경쟁사 −15, 환자군 확대로 ARIA ×1.15(영구)'},{l:'정식 승인까지 대기',d:'변화 없음'}],
+  best:function(st){return (st.trust<65||st.rival>60)?0:1;},
+  why:function(st,b){return b===0?'신뢰도가 낮거나 경쟁사가 앞서 가고 있다면 조건부 승인이 시간을 벌어 줍니다.':'신뢰도도 여유 있고 경쟁도 느긋하면, 위험(ARIA 환자군 확대)을 떠안을 이유가 없습니다.';},
+  act:function(st,i){if(i===0){st.trust+=10;st.rp+=30;st.ariaPerm*=1.15;st.rival=Math.max(0,st.rival-15);return '조건부 승인, 자원과 신뢰를 얻었지만 안전성 부담이 커집니다.';}return '정식 승인까지 기다립니다.';}},
+ {id:'tau_surge',min:30,max:115,ok:function(st){return st.regions[3].tau>25;},
+  title:'타우 PET: 확산 가속',text:'하측두피질까지 타우가 번졌다는 PET 소견이 나왔습니다. 연구 방향을 정해야 합니다.',
+  ch:[{l:'anti-tau 병용 연구 확대',d:'RP −25, 타우 확산 −12% (영구)'},{l:'아밀로이드 제거 강화',d:'투여량 +1.5, 아밀로이드 −10'},{l:'관찰만 하며 자원 비축',d:'RP +15, 타우 확산 +5%'}],
+  best:function(st){return st.profile==='advanced'?0:1;},
+  why:function(st,b){return b===0?'이미 타우가 퍼진 진행기 환자는 아밀로이드를 걷어도 타우가 계속 진행합니다 (smoldering disease), 항타우가 답입니다.':'초기·고위험 환자는 아밀로이드가 타우 확산의 씨앗이므로 제거를 강화하는 편이 먼저입니다 (단 APOE4는 ARIA 감시 필수).';},
+  act:function(st,i){
+   if(i===0){st.rp=Math.max(0,st.rp-25);st.tauPerm*=.88;return '항타우 연구에 투자했습니다, 확산 속도가 영구히 줄었습니다.';}
+   if(i===1){st.dose=Math.min(10,st.dose+1.5);st.regions.forEach(function(r){r.amy=Math.max(0,r.amy-10);});return st.profile==='advanced'?'아밀로이드는 줄었지만 이미 퍼진 타우에는 효과가 제한적입니다.':'아밀로이드를 걷어내 타우 확산의 씨앗을 줄였습니다.';}
+   st.rp+=15;st.tauPerm*=1.05;return '관찰만 한 사이 타우가 조금 더 빨라졌습니다.';}},
+ {id:'funding',min:35,max:105,ok:function(){return true;},
+  title:'연구비 위기',text:'투자 라운드가 지연되고 있습니다. 어떻게 자금을 확보할까요?',
+  ch:[{l:'대형 제약사와 라이선스',d:'RP +60, 이후 RP 수익 −8% (영구)'},{l:'정부 과제 신청',d:'RP +25, 신뢰도 +3'},{l:'현 체제 유지',d:'변화 없음'}],
+  best:function(st){return st.rp<25?0:(st.rp<80?1:2);},
+  why:function(st,b){return b===0?'자원이 바닥이라면 수익을 나눠서라도 큰 자금이 필요합니다.':b===1?'급하지는 않으니 조건 없는 정부 과제가 가성비가 좋습니다.':'자원이 충분하면 수익을 내줄 이유가 없습니다.';},
+  act:function(st,i){if(i===0){st.rp+=60;st.rpPerm*=.92;return '라이선스 계약, 자금은 확보했지만 수익을 나눕니다.';}if(i===1){st.rp+=25;st.trust+=3;return '정부 과제를 받았습니다.';}return '현 체제를 유지합니다.';}},
+ {id:'dsmb',min:85,max:145,ok:function(){return true;},
+  title:'DSMB 중간분석',text:'데이터안전성모니터링위원회가 중간 안전성·효능 자료를 검토하고 투여량 방침을 묻습니다.',
+  ch:[{l:'용량 20% 감량',d:'신뢰도 +4'},{l:'현행 유지',d:'변화 없음'},{l:'용량 +1 증량',d:'제거 속도 ↑, ARIA 위험 ↑'}],
+  best:function(st){return (st.trust<55||rawApoe4(st))?0:(amyAvg(st)>35&&st.trust>=70?2:1);},
+  why:function(st,b){return b===0?'신뢰도가 낮거나 APOE4 고위험 환자가 선별되지 않았다면 안전 마진이 우선입니다.':b===2?'신뢰도가 충분하고 아밀로이드가 아직 높다면 증량으로 목표에 닿아야 합니다.':'지금 설정이 안전과 효능의 균형점입니다.';},
+  act:function(st,i){if(i===0){st.dose=Math.max(1,st.dose*.8);st.trust+=4;return '용량을 줄였습니다.';}if(i===1)return '용량을 유지합니다.';st.dose=Math.min(10,st.dose+1);if(rawApoe4(st)){st.trust-=10;return '증량 후 APOE4 환자에서 ARIA가 늘었습니다.';}return '용량을 올렸습니다.';}},
+ // ---- 실제 사례·뉴스에서 영감을 받은 시나리오 (수치·결과는 가상) ----
+ {id:'label_warning',real:'FDA는 2023년 레카네맙 정식 승인 때 ApoE4 동형접합자의 ARIA 위험을 라벨에 경고로 올렸습니다.',min:30,max:120,ok:function(st){return st.ariaCount>=1;},
+  title:'규제당국, 안전성 라벨 강화 요구',text:'당국이 ARIA 위험(특히 APOE4 보인자)을 라벨 경고에 넣고, MRI 감시 일정을 명시하라고 요구했습니다.',
+  ch:[{l:'전면 수용 + MRI 일정 강화',d:'RP −10, 신뢰도 +5'},{l:'일부 문구에 이의 제기',d:'받아들여지면 무사, 아니면 신뢰도 하락'}],
+  best:function(st){return (rawApoe4(st)||!st.drug.flags.mri)?0:1;},
+  why:function(st,b){return b===0?'고위험군을 못 가렸거나 MRI 감시 체계가 없으면 이의 제기는 근거가 약해 역풍을 맞습니다.':'이미 MRI 감시와 선별 체계를 갖췄다면 불필요한 경고 문구에는 근거를 들어 이의를 제기할 수 있습니다.';},
+  act:function(st,i){if(i===0){st.rp=Math.max(0,st.rp-10);st.trust+=5;return '라벨을 수용해 당국과 신뢰를 쌓았습니다.';}if(st.drug.flags.mri&&!rawApoe4(st)){st.trust+=2;return '근거 자료가 받아들여졌습니다.';}st.trust-=9;return '근거가 부족해 이의가 기각되고 신뢰가 떨어졌습니다.';}},
+ {id:'retraction',real:'2022년 아밀로이드 베타 연구 부정 의혹이 불거졌고, 영향력 큰 2006년 Nature 논문은 2024년 철회됐습니다. 아밀로이드 가설 전체가 틀렸다는 뜻은 아니지만 논란이 커졌습니다.',min:35,max:120,ok:function(){return true;},
+  title:'핵심 논문 철회 스캔들',text:'아밀로이드 연구의 유명 논문 일부가 조작 의혹으로 철회됐다는 보도가 쏟아집니다. 투자자와 의료진이 아밀로이드 전략을 다시 묻습니다.',
+  ch:[{l:'독립 재현 데이터 공개',d:'RP −20, 신뢰도 +6'},{l:'타우 등 다른 표적 강조로 전환',d:'타우 확산 −5%(영구)'},{l:'공식 대응 없이 지켜보기',d:'변화 없음'}],
+  best:function(st){return (st.owned.indexOf('B7')>=0||st.profile==='advanced')?1:0;},
+  why:function(st,b){return b===0?'우리 약이 아밀로이드 제거에 의존한다면 독립 재현 데이터로 신뢰를 지켜야 합니다.':'타우 전략을 이미 병행하고 있어, 포트폴리오가 다양하다는 점을 강조하는 편이 낫습니다.';},
+  act:function(st,i){if(i===0){st.rp=Math.max(0,st.rp-20);st.trust+=6;return '재현 데이터가 신뢰를 지켰습니다.';}if(i===1){st.tauPerm*=.95;st.trust+=(st.owned.indexOf('B7')>=0?3:-3);return st.owned.indexOf('B7')>=0?'다중 표적 전략이 호평을 받았습니다.':'항타우 근거가 부족해 설득력이 약했습니다.';}st.trust-=4;return '침묵이 길어지며 불안이 커졌습니다.';}},
+ {id:'strike',real:'2024년 한국에서는 전공의 집단 사직으로 대형병원 진료·임상시험 운영이 흔들렸습니다.',min:30,max:120,ok:function(){return true;},
+  title:'의사 파업으로 임상 현장 마비',text:'의료 파업으로 주요 병원의 영상 촬영·환자 방문이 줄었습니다. 환자 모집과 모니터링에 차질이 생겼습니다.',
+  ch:[{l:'원격 모니터링 + 지방 센터 확대',d:'RP −15, 피해 최소화'},{l:'모집 중단 후 사태 종료 대기',d:'RP 수익 −5%(영구)'},{l:'해외 센터로 일부 이관',d:'RP −30, 신뢰도 +3'}],
+  best:function(st){return st.rp<40?1:(st.drug.flags.mri?0:2);},
+  why:function(st,b){return b===1?'자원이 부족하면 비싼 대응보다 일단 멈추고 비용을 아끼는 것이 낫습니다.':b===0?'이미 MRI 모니터링 체계가 있다면 원격·지방 센터로 쉽게 이어 갈 수 있습니다.':'MRI 체계가 없는데 자원이 있다면 해외 센터로 분산하는 편이 안전합니다.';},
+  act:function(st,i){if(i===0){st.rp=Math.max(0,st.rp-15);return '원격 모니터링으로 피해를 줄였습니다.';}if(i===1){st.rpPerm*=.95;return '모집을 멈춰 비용은 아꼈지만 속도가 느려졌습니다.';}st.rp=Math.max(0,st.rp-30);st.trust+=3;return '해외 센터로 분산해 안정시켰습니다.';}},
+ {id:'rival_drug',real:'레카네맙에 이어 도나네맙이 허가되고 피하주사 제형 등이 이어지며 항체 치료제 경쟁이 가열됐습니다.',min:40,max:120,ok:function(){return true;},
+  title:'경쟁 항체 허가 확대',text:'경쟁사 약물이 새 제형·적응증으로 허가를 넓혔습니다. 병원들이 비교 자료를 요구합니다.',
+  ch:[{l:'가격 인하로 맞대응',d:'RP 수익 −5%(영구), 경쟁사 −6'},{l:'안전성 차별화 홍보',d:'신뢰도 +4'},{l:'대응 없이 연구에 집중',d:'변화 없음'}],
+  best:function(st){return st.trust<70?1:(st.rival>55?0:2);},
+  why:function(st,b){return b===1?'신뢰도가 낮다면 가격보다 안전성 근거로 차별화해야 합니다.':b===0?'경쟁사가 앞서 가고 있다면 가격으로 시간을 벌어야 합니다.':'지금 우위가 있다면 불필요한 출혈 대신 연구에 집중하세요.';},
+  act:function(st,i){if(i===0){st.rpPerm*=.95;st.rival=Math.max(0,st.rival-6);return '가격 인하로 경쟁사를 늦췄습니다.';}if(i===1){st.trust+=4;return '안전성 근거가 호평을 받았습니다.';}return '연구에 집중합니다.';}},
+ {id:'cms_registry',real:'미국 메디케어는 항아밀로이드 항체를 환자 등록(레지스트리) 조건으로 급여했습니다.',min:45,max:125,ok:function(){return true;},
+  title:'보험 급여 조건: 환자 등록 의무',text:'보험당국이 급여 조건으로 모든 투약 환자를 장기 등록(레지스트리)하라고 요구했습니다. 행정 부담이 큽니다.',
+  ch:[{l:'조건 수용',d:'RP −15, 신뢰도 +6'},{l:'조건 완화 협상',d:'RP −5, 신뢰도 +3'},{l:'거부',d:'신뢰도 −6'}],
+  best:function(st){return st.trust<75?0:1;},
+  why:function(st,b){return b===0?'신뢰도가 낮다면 비용이 들어도 조건을 받아들여 안전망을 보여 주는 편이 낫습니다.':'신뢰도에 여유가 있으니 비용을 줄이는 협상이 효율적입니다.';},
+  act:function(st,i){if(i===0){st.rp=Math.max(0,st.rp-15);st.trust+=6;return '등록 체계를 갖춰 신뢰를 얻었습니다.';}if(i===1){st.rp=Math.max(0,st.rp-5);st.trust+=3;return '부담을 줄이는 선에서 합의했습니다.';}st.trust-=6;return '거부로 급여 협상이 틀어졌습니다.';}},
+ {id:'blood_test',real:'2025년 미국에서 혈액 p-tau 검사가 처음 의료기기로 허가되어, PET·뇌척수액 없이도 선별이 가능해졌습니다.',min:30,max:110,ok:function(){return true;},
+  title:'혈액검사 허가로 선별 확대',text:'혈액 p-tau217 검사가 허가됐습니다. 초기 환자를 훨씬 싸게 선별할 수 있게 됐습니다.',
+  ch:[{l:'혈액 선별 즉시 도입',d:'RP +15 (C3 보유 시 +30, 신뢰도 +3)'},{l:'PET 중심 선별 유지',d:'신뢰도 +2, RP −5'}],
+  best:function(st){return st.owned.indexOf('C3')>=0?0:1;},
+  why:function(st,b){return b===0?'이미 혈액 바이오마커 체계(C3)가 있어 새 검사를 바로 활용할 수 있습니다.':'바이오마커 체계가 없으면 검증 없이 도입하기보다 PET으로 확인하는 것이 안전합니다.';},
+  act:function(st,i){if(i===0){if(st.owned.indexOf('C3')>=0){st.rp+=30;st.trust+=3;return '혈액 선별로 환자 모집이 빨라졌습니다.';}st.rp+=15;st.trust-=4;return '검증 체계가 없어 오분류가 생겼습니다.';}st.rp=Math.max(0,st.rp-5);st.trust+=2;return 'PET으로 확인해 정확도를 지켰습니다.';}},
+ {id:'cold_chain',real:'항체 의약품은 냉장 유통이 필수라 물류 장애가 곧 공급 차질로 이어집니다.',min:30,max:120,ok:function(st){return st.drug.type==='ab';},
+  title:'냉장 유통망 장애',text:'폭염과 물류 차질로 항체 약물의 냉장 유통망에 문제가 생겼습니다. 일부 병원에서 보관 온도가 벗어났습니다.',
+  ch:[{l:'비상 재고로 교체 공급',d:'RP −20, 신뢰도 유지'},{l:'해당 물량 폐기 후 재공급 대기',d:'신뢰도 −3'}],
+  best:function(st){return st.rp>=30?0:1;},
+  why:function(st,b){return b===0?'자원에 여유가 있으니 즉시 교체해 환자 공백을 막는 편이 낫습니다.':'자원이 부족하면 무리한 교체보다 폐기 후 재공급을 기다려 비용을 지키세요.';},
+  act:function(st,i){if(i===0){st.rp=Math.max(0,st.rp-20);return '비상 재고를 풀어 공급 공백을 막았습니다.';}st.trust-=3;return '재공급까지 일부 환자의 투약이 밀렸습니다.';}},
+ {id:'aria_death',real:'레카네맙·도나네맙 투약 환자의 사망 사례가 언론에 보도되며 안전성 논쟁이 일었습니다.',min:50,max:130,ok:function(st){return st.ariaCount>=3;},
+  title:'ARIA 관련 사망 사례 보도',text:'뇌출혈로 사망한 환자가 ARIA와 연관됐을 수 있다는 보도가 나왔습니다. 의료진과 가족이 설명을 요구합니다.',
+  ch:[{l:'독립 안전성 위원회 소집 + 투약 감량',d:'용량 30% 감량, 신뢰도 +6'},{l:'개별 사례 조사 결과를 기다림',d:'신뢰도 −5 (고위험군이면 −15)'},{l:'공식 해명 발표',d:'신뢰도 +2, MRI가 있으면 +5'}],
+  best:function(st){return (rawApoe4(st)||!st.drug.flags.mri)?0:2;},
+  why:function(st,b){return b===0?'고위험군을 못 가렸거나 모니터링이 부족하면 해명보다 먼저 안전 조치를 보여 줘야 합니다.':'MRI 감시와 선별 체계로 데이터를 보여 줄 수 있다면 투명한 해명이 가장 효과적입니다.';},
+  act:function(st,i){if(i===0){st.dose=Math.max(1,st.dose*.7);st.trust+=6;return '독립 위원회와 감량으로 불안을 가라앉혔습니다.';}if(i===1){st.trust-=rawApoe4(st)?15:5;return '기다리는 사이 여론이 악화됐습니다.';}st.trust+=st.drug.flags.mri?5:2;return st.drug.flags.mri?'MRI 데이터를 근거로 설득력 있게 해명했습니다.':'근거가 부족해 해명 효과가 작았습니다.';}}
+];
+
+function rng(seed){var a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function applyMods(s,m,f){ // 덧셈 → 곱셈 → 플래그 순서 고정
+  for(var k in (m.add||{})) s[k]=(s[k]||0)+m.add[k];
+  for(var k2 in (m.mul||{})) s[k2]=(s[k2]===undefined?1:s[k2])*m.mul[k2];
+}
+var LAB={
+ ethanol:{ko:'에탄올',f:'C2H6O',atoms:{C:2,H:6,O:1},use:'용매로 쓰면 작은 분자 약은 합성이 30% 빨라지고, 항체(단백질)는 변성돼 40% 느려져요. 수산기(-OH) 작용기로 붙이면 표적에 더 세게 붙어요.'},
+ acetic:{ko:'아세트산',f:'C2H4O2',atoms:{C:2,H:4,O:2},use:'촉매 합성(재료 1개 소모)에 필요해요. 카복실기(-COOH)로 붙이면 붙는 힘이 늘지만 부작용이 조금 늘어요.'},
+ ammonia:{ko:'암모니아',f:'NH3',atoms:{N:1,H:3},use:'아민기(-NH2) 작용기로 붙이면 표적에 아주 세게 붙지만 뇌 장벽 통과가 나빠져요.'},
+ amide:{ko:'아세트아마이드',f:'C2H5NO',atoms:{C:2,H:5,N:1,O:1},use:'아마이드기로 붙이면 뇌 안에 약이 더 오래 머물러요.'}
+};
+var GROUPS={
+ ethanol:{ko:'수산기 (-OH)',mods:{add:{HBD:1},mul:{Kd:.9}}},
+ acetic:{ko:'카복실기 (-COOH)',mods:{add:{TPSA:10},mul:{Kd:.88,aria:1.1}}},
+ ammonia:{ko:'아민기 (-NH2)',mods:{add:{HBD:1,TPSA:6},mul:{Kd:.8}}},
+ amide:{ko:'아마이드기',mods:{add:{TPSA:6},mul:{retention:1.15}}}
+};
+K.MAX_GROUPS=3;
+K.ORDER_BASE=6; K.ORDER_ATOMS=3;
+function orderCost(st){return Math.round(K.ORDER_BASE*(1+.5*st.orders));}
+function labOrder(st,a){var c=orderCost(st);if(!{C:1,H:1,O:1,N:1}[a])return '없는 원소';if(st.rp<c)return '연구점수 부족 (시약 주문 '+c+')';st.rp-=c;st.orders++;st.atoms[a]=Math.min(K.ATOM_CAP,st.atoms[a]+K.ORDER_ATOMS);say(st,'시약 주문: '+a+' +'+K.ORDER_ATOMS+' (연구점수 -'+c+')');return true;}
+function labCraft(st,id){var r=LAB[id];if(!r)return '없는 레시피';for(var a in r.atoms)if(st.atoms[a]<r.atoms[a])return '재료 부족';
+ for(var b in r.atoms)st.atoms[b]-=r.atoms[b];st.lab[id]++;say(st,r.ko+' 합성 완료');return true;}
+function labAttach(st,id){var g=GROUPS[id];if(!g||st.lab[id]<1)return '재고 없음';if(st.groups.length>=K.MAX_GROUPS)return '작용기는 '+K.MAX_GROUPS+'개까지';
+ if(st.groups.indexOf(id)>=0)return '이미 붙였어요';st.lab[id]--;st.groups.push(id);st.drug=computeDrug(st.company,st.owned,st.combos,st.groups);say(st,g.ko+' 작용기를 약에 붙였습니다');return true;}
+function computeDrug(company, owned, combos, groups){
+  var co=COMPANIES[company]; var s=Object.assign({},co.base==='sm'?BASE_SM:BASE_AB); s.flags={};
+  var list=owned.map(function(i){return NODE[i];});
+  var cm=combos.map(function(i){return COMBOS.filter(function(c){return c.id===i;})[0];});
+  if(combos.indexOf('X3')>=0) Object.assign(s,X3_SM);
+  var gl=(groups||[]).map(function(i){var g=GROUPS[i];return {mods:(s.type==='ab')?{add:{},mul:Object.assign({},g.mods.mul,{aria:(g.mods.mul.aria||1)*1.1})}:g.mods};});
+  var src=[{mods:co.mods}].concat(list).concat(cm).concat(gl);
+  src.forEach(function(x){for(var k in (x.mods.add||{})) s[k]=(s[k]||0)+x.mods.add[k];});
+  src.forEach(function(x){for(var k in (x.mods.mul||{})) s[k]=(s[k]===undefined?1:s[k])*x.mods.mul[k];});
+  list.concat(cm).forEach(function(x){var f=x.mods&&x.mods.flag||x.flag||{};for(var k in f) s.flags[k]=f[k];});
+  s.polarity = s.type==='ab' ? K.ANTIBODY_POLARITY : .45*s.HBD+.012*s.TPSA-.35*s.logP;
+  s.size = Math.log10(s.MW)-2.6;
+  s.bbbScore = 6.0-2.0*s.polarity-2.6*s.size+s.bbb;
+  s.uptake = 90/(1+Math.exp(-s.bbbScore));
+  return s;
+}
+function braakNow(st){var b=0;st.regions.forEach(function(r){if(r.tau>K.TAU_THRESHOLD&&r.braak>b)b=r.braak;});return b;}
+function theta(d,dose){var brain=dose*(1-d.plasmaBind)*d.uptake/100*d.retention;return brain/(brain+d.Kd);}
+function derive(st){
+  var d=st.drug, bk=Math.max(0,braakNow(st)-(d.braakShift||0));
+  var th=theta(d,st.dose);
+  var clearMul=d.clear*((d.flags.titration&&st.week<26)?.8:1);
+  var P=PROFILES[st.profile],D=DIFF[st.diff],buff=st.week<st.ariaBuff.until?st.ariaBuff.mul:1;
+  var clear=K.CLEAR_K*th*clearMul*P.clear*(1-K.TAU_PENALTY*bk/6);
+  var aria=K.ARIA_BASE*Math.pow(st.dose/K.C_REF,K.ARIA_EXP)*d.aria*(d.flags.apoe?1:P.risk)*D.aria*st.ariaPerm*buff;
+  return {theta:th,clear:clear,aria:aria,rpRate:K.RP_BASE*d.rp*st.rpPerm*(st.rivalWon?.85:1),tauSpread:K.SPREAD_RATE*d.tau*D.spread*P.spread*st.tauPerm};
+}
+function nodeCost(st,id){
+  var n=NODE[id],c=Object.assign({},n.cost),co=COMPANIES[st.company],f=1;
+  if(co.discount&&((co.discount.tree&&co.discount.tree===n.tree)||co.discount.id===id)) f=co.discount.f;
+  var same=st.owned.filter(function(o){return NODE[o].tree===n.tree;}).length;c={rp:Math.round(c.rp*f*(1+.05*same)*10)/10}; return c; // CHON은 합성 실험실 전용
+}
+function newState(company,seed,diff,profile){
+  var rand=rng(seed||1); diff=DIFF[diff]?diff:'normal';
+  if(!PROFILES[profile]) profile=['early','apoe4','advanced'][Math.floor(rand()*3)];
+  var P=PROFILES[profile];
+  var st={week:0,paused:true,speed:1,rp:0,atoms:{C:6,H:10,O:4,N:2},atomAcc:0,orders:0,lab:{ethanol:0,acetic:0,ammonia:0,amide:0},groups:[],owned:[],combos:[],pipeline:[null,null,null],
+    dose:5,regions:REGIONS.map(function(r){return {id:r.id,ko:r.ko,braak:r.braak,w:r.w,to:r.to,xy:r.xy,tau:P.tau[r.id]!==undefined?P.tau[r.id]:r.tau,amy:P.amy};}),
+    cognition:100,trust:100,company:company,pendingAria:[],news:[],bubbles:[],bubbleT:8,nextId:1,
+    earlyUsed:false,over:null,rand:rand,drug:computeDrug(company,[],[]),
+    profile:profile,diff:diff,event:null,fired:{},eventT:10+rand()*8,log:[],ariaCount:0,
+    ariaPerm:1,tauPerm:1,rpPerm:1,ariaBuff:{mul:1,until:0},rival:0,rivalRate:100/DIFF[diff].rival*(.9+.2*rand()),rivalWon:false};
+  return st;
+}
+function say(st,t){st.news.unshift(t);if(st.news.length>30)st.news.pop();}
+// 같은 선택의 정답은 상황(ΔH, 약물 종류, 장비 포화)에 따라 바뀐다
+function isProtein(st,n){return st.drug.type==='ab'&&n.tree==='B';}
+function condMult(st,n,cond){
+  var prot=isProtein(st,n),m;
+  if(cond==='catalyst') m=prot?1.3:1.5;
+  else if(prot) m=cond==='cool'?1.4:.5;
+  else if(n.dH===0) m=1;
+  else m=((n.dH<0)===(cond==='cool'))?1.4:.7;
+  if(cond!=='catalyst'&&st.pipeline.filter(function(p){return p&&p.cond===cond;}).length>=2) m*=.75;
+  return m;
+}
+function bestCond(st,n,hasN){var b=null,bm=-1;['cool','heat','catalyst'].forEach(function(k){if(k==='catalyst'&&!hasN)return;var m=condMult(st,n,k);if(m>bm+1e-9){bm=m;b=k;}});return {cond:b,mult:bm};}
+function worstCond(st,n){var w=null,wm=9;['cool','heat'].forEach(function(k){var m=condMult(st,n,k);if(m<wm){wm=m;w=k;}});return w;}
+function whyWrong(st,n,cond){
+  if(cond==='catalyst') return '촉매는 활성화 에너지를 낮춰 속도만 올릴 뿐 평형 위치는 바꾸지 못합니다 (아세트산 1개 소모).';
+  if(isProtein(st,n)&&cond==='heat') return '항체 같은 단백질은 가열하면 변성되어 활성을 잃습니다, ΔH 부호와 무관하게 저온이 원칙입니다.';
+  var busy=st.pipeline.filter(function(p){return p&&p.cond===cond;}).length>=2;
+  if(busy) return (cond==='cool'?'냉각기':'가열기')+' 2대가 이미 가동 중이라 용량이 포화됐습니다, 다른 조건이나 촉매가 낫습니다.';
+  return n.dH<0?'발열 반응은 가열하면 평형이 반응물 쪽으로 이동해 수율이 떨어집니다 (르샤틀리에).':'흡열 반응은 냉각하면 평형이 반응물 쪽으로 이동해 수율이 떨어집니다 (르샤틀리에).';
+}
+function canBuy(st,id){
+  var n=NODE[id],co=COMPANIES[st.company],why=[];
+  if(st.owned.indexOf(id)>=0) return {ok:false,why:['보유 중']};
+  n.req.forEach(function(r){if(!(co.exempt&&co.exempt[id]===r)&&st.owned.indexOf(r)<0)why.push('선행: '+r);});
+  if(n.reqAny.length&&!n.reqAny.some(function(r){return st.owned.indexOf(r)>=0;}))why.push('선행(택1): '+n.reqAny.join(' 또는 '));
+  n.excl.forEach(function(e){if(st.owned.indexOf(e)>=0)why.push('배타: '+e+' 보유로 영구 잠금');});
+  st.pipeline.forEach(function(p){if(p&&p.nodeId===id)why.push('합성 중');});
+  return {ok:why.length===0,why:why};
+}
+function buy(st,id,cond,solv){ // 성공 시 true, 실패 시 사유 문자열
+  var cb=canBuy(st,id); if(!cb.ok) return cb.why.join(', ');
+  var n=NODE[id],c=nodeCost(st,id),inst=n.dH===0;
+  var useCat=(!inst&&cond==='catalyst'),useSol=(!inst&&!!solv);
+  if(!inst){ if(st.pipeline.indexOf(null)<0) return '파이프라인이 가득 찼습니다'; }
+  if(st.rp<c.rp) return 'RP 부족';
+  if(useCat&&st.lab.acetic<1) return '촉매에는 아세트산이 필요해요 (실험실에서 합성)';
+  if(useSol&&st.lab.ethanol<1) return '용매에는 에탄올이 필요해요 (실험실에서 합성)';
+  st.rp-=c.rp; if(useCat)st.lab.acetic--; if(useSol)st.lab.ethanol--;
+  if(inst){complete(st,id);return true;}
+  var mult=condMult(st,n,cond)*(useSol?(st.drug.type==='ab'?.6:1.3):1),good=mult>=bestCond(st,n,false).mult-1e-9; // 촉매는 항상 허용(빠름), 온도 선택만 정오 판정
+  st.pipeline[st.pipeline.indexOf(null)]={nodeId:id,cond:cond,progress:0,total:c.rp*K.SYNTH_SEC_PER_RP/mult,mult:mult,paid:{rp:c.rp,atoms:{}}};
+  if(good&&n.dH!==0){var bonus=Math.round(c.rp*.2);st.rp+=bonus;say(st,'알맞은 조건, 수율이 좋아 연구점수 +'+bonus);}
+  if(useSol&&st.drug.type==='ab')say(st,'에탄올 용매가 항체를 변성시켜 합성이 느려졌습니다');
+  if(n.dH!==0) st.log.push({week:st.week,kind:'chem',title:id+' '+n.name,pick:({cool:'냉각',heat:'가열',catalyst:'촉매'})[cond],good:good,why:good?'':whyWrong(st,n,cond)});
+  if(!good) say(st,'수율 저하 · '+id+': '+whyWrong(st,n,cond));
+  return true;
+}
+function cancel(st,slot){
+  var p=st.pipeline[slot]; if(!p) return;
+  st.rp+=p.paid.rp*.5; for(var a in p.paid.atoms) if(a!=='rp') st.atoms[a]=Math.min(K.ATOM_CAP,st.atoms[a]+Math.floor(p.paid.atoms[a]*.5));
+  st.pipeline[slot]=null; say(st,'합성 취소, 투입 자원의 50% 회수');
+}
+function complete(st,id){
+  st.owned.push(id); var n=NODE[id];
+  if(id==='C6') st.rival=Math.max(0,st.rival-8);
+  if(id==='C3'){var b=braakNow(st);st.regions.forEach(function(r){if(r.braak===b&&r.tau>K.TAU_THRESHOLD)r.tau*=.6;});}
+  COMBOS.forEach(function(c){if(st.combos.indexOf(c.id)<0&&c.req.every(function(r){return st.owned.indexOf(r)>=0;})){st.combos.push(c.id);st.lastCombo=c;say(st,'조합 해금 '+c.id+' '+c.name);}});
+  st.drug=computeDrug(st.company,st.owned,st.combos,st.groups);
+  say(st,id+' 완료, '+n.gain);
+}
+function useEarly(st){
+  if(st.combos.indexOf('X4')<0||st.earlyUsed) return false;
+  var b=braakNow(st); st.regions.forEach(function(r){if(r.braak===b)r.tau=Math.min(r.tau,K.TAU_THRESHOLD*.8);});
+  st.earlyUsed=true; say(st,'조기 개입: Braak '+b+'단계 진행을 되돌렸습니다'); return true;
+}
+function collectBubble(st,id){var i=st.bubbles.findIndex(function(b){return b.id===id;});if(i<0)return;st.bubbles.splice(i,1);st.rp+=K.BUBBLE_RP;}
+function ariaHit(st){
+  var d=st.drug,f=d.flags,dmgK=d.trustDmg*(f.autoReduce?.5:1); st.ariaCount++;
+  if(st.rand()<.7){
+    if(f.mri){st.trust-=15*dmgK;say(st,'ARIA-E 조기 발견 (MRI), 용량 조정 필요');}
+    else{st.pendingAria.push({due:st.week+13,dmg:15*dmgK});say(st,'환자 일부에서 이상 소견 의심… (MRI 없음, 원인 불명)');}
+  }else{st.trust-=8*dmgK;say(st,'ARIA-H 미세출혈 보고');}
+  if(f.autoReduce) st.dose=Math.max(1,st.dose*.8);
+}
+function resolveEvent(st,i){
+  var ev=EVENTS.filter(function(e){return e.id===st.event.id;})[0],b=st.event.best,why=ev.why(st,b);
+  var t=ev.act(st,i);
+  st.log.push({week:st.week,kind:'event',title:ev.title,pick:ev.ch[i].l,best:ev.ch[b].l,good:i===b,why:i===b?'':why});
+  if(i===b){st.rp+=10;t+=' (적절한 판단, 연구점수 +10)';}
+  say(st,(i===b?'✔ ':'✖ ')+ev.title+', '+t); st.event=null;
+}
+function step(st,dt){
+  if(st.over||st.event) return;
+  st.week+=dt; var dv=derive(st),d=st.drug;
+  st.rp+=dv.rpRate*dt;
+  st.atomAcc+=K.ATOM_RATE*dt;
+  while(st.atomAcc>=1){st.atomAcc-=1;var r=st.rand(),acc=0,pick='N';for(var a in K.ATOM_W){acc+=K.ATOM_W[a];if(r<acc){pick=a;break;}}if(st.atoms[pick]<K.ATOM_CAP)st.atoms[pick]++;}
+  st.bubbles=st.bubbles.filter(function(b){b.ttl-=dt;return b.ttl>0;});
+  st.bubbleT-=dt; if(K.BUBBLES&&st.bubbleT<=0){var rg=st.regions[Math.floor(st.rand()*8)];st.bubbles.push({id:st.nextId++,x:rg.xy[0]+(st.rand()-.5)*50,y:rg.xy[1]+(st.rand()-.5)*40,ttl:K.BUBBLE_TTL});st.bubbleT=K.BUBBLE_EVERY[0]+st.rand()*(K.BUBBLE_EVERY[1]-K.BUBBLE_EVERY[0]);}
+  for(var i=0;i<3;i++){var p=st.pipeline[i];if(p){p.progress+=dt/p.total;if(p.progress>=1){st.pipeline[i]=null;complete(st,p.nodeId);d=st.drug;}}}
+  var dt0=st.regions.map(function(){return 0;});
+  // 아밀로이드가 먼저 깔린 영역일수록 타우가 잘 번진다 (amyloid → tau 순서)
+  st.regions.forEach(function(ri){if(ri.tau>K.TAU_THRESHOLD)ri.to.forEach(function(t){var j=st.regions.findIndex(function(x){return x.id===t;});dt0[j]+=dv.tauSpread*ri.tau*(.35+.65*st.regions[j].amy/100);});});
+  st.rival=Math.min(100,st.rival+st.rivalRate*dt);
+  st.rn=st.rn||{};[25,50,75,95].forEach(function(t){if(st.rival>=t&&!st.rn[t]){st.rn[t]=1;say(st,'경쟁사 약물 임상 '+t+'% 진행'+(t>=95?', 곧 허가를 신청합니다':''));}});
+  if(st.rival>=100&&!st.rivalWon){st.rivalWon=true;say(st,'⚠ 경쟁사 약물이 먼저 승인됐습니다, 최고 등급 B로 제한, 연구 수익 −15%');}
+  st.eventT-=dt;
+  if(st.eventT<=0){var el=EVENTS.filter(function(e){return !st.fired[e.id]&&st.week>=e.min&&st.week<=e.max&&e.ok(st);});
+    if(el.length){var e=el[Math.floor(st.rand()*el.length)];st.fired[e.id]=1;st.event={id:e.id,best:e.best(st)};st.eventT=K.EVENT_GAP[0]+st.rand()*(K.EVENT_GAP[1]-K.EVENT_GAP[0]);}else st.eventT=4;}
+  st.regions.forEach(function(rj,j){rj.tau=Math.min(100,rj.tau+dt0[j]*(1-rj.tau/100)*dt);
+    rj.amy=Math.max(0,Math.min(100,rj.amy+(K.AMY_GROWTH*100*(1-rj.amy/100)-dv.clear*rj.amy)*dt));});
+  var sum=0;st.regions.forEach(function(r){sum+=r.w*r.tau;}); st.cognition-=K.COG_K*sum*dt;
+  var pm=1-Math.pow(1-Math.min(.999,dv.aria),K.COHORT); // 월간, 환자군 K.COHORT명
+  if(st.rand()<pm/4.33*dt) ariaHit(st);
+  st.pendingAria=st.pendingAria.filter(function(a){if(st.week>=a.due){st.trust-=a.dmg;say(st,'지연 ARIA-E 증상 발현, 신뢰도 하락');return false;}return true;});
+  var amy=st.regions.reduce(function(s,r){return s+r.amy;},0)/8;
+  if(st.regions[7].tau>K.LOSE_TAU) st.over={win:false,why:'타우가 감각운동피질에 도달했습니다'};
+  else if(st.trust<=0) st.over={win:false,why:'신뢰도 0, 임상 중단'};
+  else if(st.cognition<25) st.over={win:false,why:'인지 기능 25% 미만'};
+  else if(st.week>=K.TOTAL_WEEKS){
+    if(st.cognition>=50&&amy<20){var g=(st.cognition>=75&&st.trust>=70&&st.combos.indexOf('X5')>=0)?'S':st.cognition>=60?'A':'B';if(st.rivalWon&&g!=='B')g='B';st.over={win:true,grade:g,why:'36개월 완주'};}
+    else st.over={win:false,why:'36개월 종료, 목표(인지 ≥50%, 아밀로이드 <20) 미달'};
+  }
+  if(st.over){st.over.amy=amy;st.over.cognition=st.cognition;st.over.trust=st.trust;st.over.week=st.week;}
+}
+// strategy: {company, order:[ids], cond:'right'|'wrong'|'catalyst', dose:function(drug,state)}
+function simulate(S,seed){
+  var st=newState(S.company||'antibody_house',seed,S.diff||'normal',S.profile),idx=0;
+  while(!st.over){
+    if(st.event){resolveEvent(st,S.event==='wrong'?(st.event.best+1)%EVENTS.filter(function(e){return e.id===st.event.id;})[0].ch.length:st.event.best);continue;}
+    if(S.dose) st.dose=S.dose(st.drug,st);
+    if(idx<S.order.length){var id=S.order[idx],n=NODE[id];
+      var cond=S.cond==='wrong'?worstCond(st,n):S.cond==='catalyst'?'catalyst':bestCond(st,n,false).cond;
+      if(canBuy(st,id).ok&&buy(st,id,cond)===true) idx++;}
+    st.bubbles.forEach(function(b){if(st.rand()<.8)collectBubble(st,b.id);});
+    step(st,.1);
+  }
+  return st.over;
+}
+// ===================== ENGINE END =====================
+</script>
+<script id="ui">
+// ===================== UI (전염병 주식회사 스타일 · 비전공자용 쉬운말) =====================
+if (typeof document !== 'undefined') (function(){
+var $=function(s){return document.querySelector(s);},$$=function(s){return document.querySelectorAll(s);};
+var st=null,diff='normal',tab='A',selId=null,prev={},acc=0,last=0,resumeAfter=false,muted=false,AC=null,bubKey='',evOpen=false;
+var ATOM={C:'탄소',H:'수소',O:'산소',N:'질소'},ATOMTIP='실험실에서 화합물을 만드는 원료예요. 자동으로 쌓이지 않아요. 실험실에서 연구점수로 주문해야 하고, 주문할수록 비싸져요.',CONDK={cool:'냉각',heat:'가열',catalyst:'촉매'};
+function beep(f,d,t){if(muted)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();var o=AC.createOscillator(),g=AC.createGain();o.type=t||'sine';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.stop(AC.currentTime+d);}catch(e){}}
+// [쉬운 이름, 무슨 일을 하나, 좋은 점, 대가]
+var EASY={
+A1:['기름과 친해지기','뇌 혈관벽은 기름막이에요. 약을 기름과 친하게 바꾸면 장벽을 더 쉽게 통과해요.','뇌 장벽 통과율 ↑','물에 덜 녹음'],
+A2:['수소 손잡이 줄이기','약 표면의 물과 붙는 "손잡이"를 줄이면 막을 슥 지나가요.','뇌 장벽 통과율 ↑','표적에 붙는 힘 약간 ↓'],
+A3:['표면 전기끌림 줄이기','약 표면의 전기적 끌림(극성)이 작을수록 기름막을 잘 넘어요.','뇌 장벽 통과율 ↑↑','혈액 단백질에 붙어 쓸 수 있는 약 ↓'],
+A4:['약 크기 줄이기','작을수록 좁은 틈을 통과해요.','뇌 장벽 통과율 ↑','표적에 붙는 힘 ↓'],
+A5:['퍼내는 펌프 피하기','뇌 혈관벽의 "약 퍼내는 펌프"에 안 걸리면 들어간 약이 오래 머물러요.','뇌 안에 머무는 약 +35%','없음'],
+A6:['택배 셔틀 붙이기','뇌 혈관벽의 철분 수송 문을 열쇠처럼 써서 약을 통째로 들여보내요. 가장 강력한 방법!','뇌 장벽 통과율 ↑↑↑, 부작용 ↓','연구점수 많이 듦 · 주입 반응·빈혈 위험'],
+A7:['피하주사로 바꾸기','병원 정맥주사 대신 간단한 피하주사로 바꿔요.','연구점수 획득 +25%','없음'],
+B1:['떠다니는 응집체 노리기','아밀로이드가 굳기 전 떠다니는 덩어리를 먼저 잡아요. 타우가 덜 번지고 안전해요.','타우 번짐 −20%','찌꺼기 제거는 약간 ↓'],
+B2:['굳은 찌꺼기 직접 제거','이미 쌓여 굳은 아밀로이드 찌꺼기를 강하게 지워요.','아밀로이드 제거 +35%','뇌 부종·출혈(ARIA) 위험 ↑'],
+B3:['접착력 두 배','약이 표적에 두 배 세게 붙어요. 같은 양으로 효과가 올라요.','표적 결합 ↑↑','없음'],
+B4:['변형된 찌꺼기 노리기','변형돼 더 독한 찌꺼기를 골라 지워요.','아밀로이드 제거 +25%','없음'],
+B5:['청소 세포 호출','뇌 청소 세포를 불러 빨리 치워요. (‘면역 반응 낮추기’와 둘 중 하나만)','아밀로이드 제거 +30%','혈관 염증 → 부작용 ↑'],
+B6:['면역 반응 낮추기','청소 세포를 덜 자극해 안전해져요. (‘청소 세포 호출’과 둘 중 하나만)','부작용 위험 −30%','제거 속도 −15%'],
+B7:['타우 막는 약 추가','아밀로이드를 지워도 타우는 계속 번져요. 타우를 따로 막는 약을 함께 써요.','타우 번짐 −45%','연구점수 매우 많이 듦'],
+C1:['정기 MRI 촬영','뇌 부종은 겉으로 안 보여요. MRI로 일찍 찾으면 신뢰도 피해가 줄어요.','부작용 조기 발견, 피해 −60%','연구점수 소모'],
+C2:['APOE4 유전자 검사','APOE4 유전자가 있으면 부작용 위험이 훨씬 높아요. 미리 가려내 위험을 줄여요.','고위험 환자 위험 제거','연구점수 소모'],
+C3:['혈액으로 조기 진단','피 한 방울(p-tau217)로 환자를 일찍 찾아 덜 진행된 상태로 시작해요.','병 진행 단계 −1, 연구점수 +10%','없음'],
+C4:['천천히 늘려 투여','용량을 서서히 올려 혈관이 적응하게 해요.','부작용 위험 −35%','첫 6개월은 효과 −20%'],
+C5:['이상 시 자동 감량','부작용이 나오면 자동으로 약을 줄이고 피해도 반으로 줄여요.','부작용 피해 −50%','없음'],
+C6:['규제 패스트트랙','허가 심사를 앞당겨요. 경쟁사 진척도 늦춰요.','연구점수 +20%, 경쟁사 −8','없음'],
+C7:['환자 모집 확대','환자를 많이 모아요. 연구는 빨라지지만 드문 부작용도 더 드러나요.','연구점수 +30%','부작용 위험 +15%']};
+var REC={
+early:[['C1','부작용은 눈에 안 보여요. MRI부터 갖추세요.'],['B2','초기 환자는 반응이 좋아요. 굳은 찌꺼기를 강하게 지우세요.'],['B3','약이 더 세게 붙으면 같은 양으로 효과가 올라요.'],['C4','천천히 올려 부작용을 줄이세요.'],['A1','이제 약이 뇌에 들어가게 만들 차례예요.'],['A3','뇌 장벽 통과율을 더 올려요.'],['C3','혈액 진단으로 더 일찍 시작해요.'],['A6','셔틀로 뇌 장벽을 통째로 돌파!'],['C5','부작용이 나와도 자동으로 줄여요.']],
+apoe4:[['C1','이 환자들은 부작용에 약해요. MRI부터!'],['C2','APOE4 환자가 많아요, 유전자 검사로 위험을 먼저 줄이세요.'],['C4','천천히 늘려 투여하면 혈관이 적응해요.'],['A1','뇌 장벽 통과를 개선해요.'],['A3','뇌 장벽 통과율을 더 올려요.'],['C3','혈액 진단으로 환자 선별.'],['A6','셔틀은 부작용도 줄여 줘요.'],['B1','굳은 찌꺼기보다 안전한 응집체 표적이 이 환자들에겐 맞아요.'],['B3','접착력으로 낮은 용량의 효과를 보완해요.'],['C5','부작용이 나오면 자동 감량.']],
+advanced:[['C1','MRI부터 갖추세요.'],['A1','일단 약이 뇌에 들어가게 해요.'],['A3','뇌 장벽 통과율을 올려요.'],['C3','혈액 진단으로 진행 단계를 낮춰요.'],['A6','셔틀로 뇌 장벽 돌파.'],['B1','타우가 이미 퍼진 환자는 타우를 덜 번지게 하는 약이 중요해요.'],['B3','접착력 강화.'],['C4','부작용 줄이기.'],['B7','이미 퍼진 타우는 항타우 약이 필요해요, 가장 중요!']]};
+var P_={
+A1:'<path d="M12 3C12 3 5 11 5 15a7 7 0 0014 0C19 11 12 3 12 3z"/>',
+A2:'<circle cx="12" cy="12" r="3"/><path d="M3 12h4M17 12h4M12 3v3"/>',
+A3:'<path d="M13 2L5 14h6l-1 8 8-12h-6z"/>',
+A4:'<path d="M4 4l6 6M10 6v4H6M20 20l-6-6M14 18v-4h4"/>',
+A5:'<path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/><path d="M8 12h8"/>',
+A6:'<path d="M12 2c4 3 5 8 3 13H9c-2-5-1-10 3-13z"/><path d="M9 15l-3 4M15 15l3 4"/><circle cx="12" cy="9" r="1.2"/>',
+A7:'<path d="M18 3l3 3M16 5l3 3M15 6L6 15l-2 5 5-2 9-9"/><path d="M9 12l3 3"/>',
+B1:'<circle cx="8" cy="9" r="3"/><circle cx="16" cy="8" r="2"/><circle cx="14" cy="16" r="4"/>',
+B2:'<path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 8v8"/>',
+B3:'<path d="M5 4v8a7 7 0 0014 0V4h-4v8a3 3 0 01-6 0V4z"/>',
+B4:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+B5:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/>',
+B6:'<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l4 6M21 9l-4 6"/>',
+B7:'<path d="M3 18c4-10 6 4 8-6s4 6 8-6"/><path d="M3 6c4 4 6-2 9 2"/>',
+C1:'<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="12" cy="12" r="4"/>',
+C2:'<path d="M7 3c0 6 10 6 10 12M17 3c0 6-10 6-10 12M8 6h8M8 18h8"/>',
+C3:'<path d="M12 4C12 4 6 11 6 15a6 6 0 0012 0C18 11 12 4 12 4z"/><path d="M12 12v5M9.5 14.5h5"/>',
+C4:'<path d="M3 20h5v-5h5v-5h5V5h3"/>',
+C5:'<path d="M8 5v14M16 5v14"/>',
+C6:'<path d="M4 5l8 7-8 7zM12 5l8 7-8 7z"/>',
+C7:'<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2 20c0-4 3-6 6-6s6 2 6 6M14 20c0-3 2-5 5-5s3 2 3 5"/>'};
+function ico(id,s){return '<svg viewBox="0 0 24 24" width="'+(s||30)+'" height="'+(s||30)+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+P_[id]+'</svg>';}
+var CAT={A:['침투','뇌 장벽 돌파','A6'],B:['표적','병의 원인 공략','B4'],C:['임상','안전·운영','C1']};
+var COCO={antibody_house:['A','Antibody House','결합력이 강한 항체 약물. ‘표적’ 갈래 노드가 20% 싸요. 무난한 시작.'],shuttle_lab:['S','Shuttle Lab','뇌 장벽 통과 기술이 좋아요. 핵심 노드 ‘셔틀’이 싸고 바로 살 수 있어요.'],small_lab:['M','Small-Molecule Lab','처음부터 작은 분자 약. 뇌엔 잘 들어가지만 병을 늦추는 힘이 약해요.']};
+
+// 화면에는 A1·X3 같은 코드 대신 항상 이름만 보여준다
+function clean(t){return String(t).replace(/\b([ABC][1-7])\b/g,function(m,id){return EASY[id]?'「'+EASY[id][0]+'」':m;}).replace(/\bX[1-5]\b/g,function(m){var c=COMBOS.filter(function(x){return x.id===m;})[0];return c?'「'+c.name+'」':m;});}
+function ownedOrRun(id){return st.owned.indexOf(id)>=0||st.pipeline.some(function(p){return p&&p.nodeId===id;});}
+function costStr(c){return '연구점수 '+c.rp;}
+function nextRec(){var l=REC[st.profile];for(var i=0;i<l.length;i++)if(!ownedOrRun(l[i][0])&&canBuy(st,l[i][0]).ok)return l[i];return null;}
+function reqText(n){var t=[];n.req.forEach(function(r){t.push(r+' '+EASY[r][0]);});if(n.reqAny.length)t.push('다음 중 하나: '+n.reqAny.map(function(r){return r+' '+EASY[r][0];}).join(' / '));return t.join(', ');}
+
+// ---------- 시작 ----------
+var DL={easy:['쉬움','부작용·타우가 느리고 경쟁사가 늦어요'],normal:['보통','기본 난이도'],hard:['어려움','부작용·타우가 빠르고 경쟁사가 일찍 승인받아요']};
+Object.keys(DIFF).forEach(function(k){var b=document.createElement('button');b.className='pill'+(k===diff?' on':'');b.textContent=DL[k][0];b.title=DL[k][1];b.dataset.d=k;b.onclick=function(){diff=k;$$('#diffs .pill').forEach(function(x){x.classList.toggle('on',x.dataset.d===k);});};$('#diffs').appendChild(b);});
+Object.keys(COMPANIES).forEach(function(k){var c=COCO[k],b=document.createElement('button');b.className='co';b.innerHTML='<span class="ic">'+c[0]+'</span><span><b>'+c[1]+'</b><small>'+c[2]+'</small></span>';b.onclick=function(){start(k);};$('#cos').appendChild(b);});
+function start(c){
+  st=newState(c,Date.now()&0xffff,diff);st.paused=true;$('#start').classList.remove('show');
+  var P=PROFILES[st.profile],r=REC[st.profile][0];
+  $('#briefBox').innerHTML='<div class="logo" style="font-size:26px">이번 임상 환자들</div><h2 style="margin-top:12px" class="warn">'+P.ko+'</h2><p>'+P.brief+'</p>'+
+   '<div class="rule"><b>환자 유형이 정답을 바꿔요.</b> 같은 선택이라도 환자에 따라 도움이 되기도, 독이 되기도 해요. 가끔 터지는 <b>뉴스 사건</b>에서도 마찬가지예요.<br>처음 할 일: <b>'+EASY[r[0]][0]+'</b>, '+r[1]+'</div>'+
+   '<div style="text-align:right"><button class="btn" id="briefGo">시작하기</button></div>';
+  $('#brief').classList.add('show');$('#briefGo').onclick=function(){$('#brief').classList.remove('show');say(st,'지금은 멈춘 상태예요. 설명을 읽고 ▶(스페이스바)로 시작하세요.');build();coach(0);};
+}
+// ---------- 튜토리얼 ----------
+var STEPS=[
+ {t:'#brain',h:'① 뇌 지도, 시간과의 싸움',b:'<b class="bad">빨간 원</b> = 나쁜 단백질 <b>타우</b>(숫자는 농도). 시간이 지나면 점선을 따라 다음 영역으로 번져요. <b>맨 위 감각운동피질</b>이 빨개지면 패배! 주황 점은 아밀로이드 찌꺼기(약으로 지울 수 있음)예요.'},
+ {t:'#cats',h:'② 개발 버튼, 약 강화하기',b:'<b class="good">개발</b> 버튼을 누르면 약을 강화하는 트리가 열려요. <b>침투</b>(약이 뇌에 들어가게), <b>표적</b>(병의 원인에 잘 붙게), <b>임상</b>(시험을 안전하게) 세 갈래가 있어요. 동그라미를 누르면 쉬운 설명이 나와요.<br>비용은 왼쪽 위 <b>연구점수</b>(시간이 지나면 쌓여요)와 재료예요. 화면 위 <b>추천</b> 말풍선을 따라 해도 좋아요.'},
+ {t:'#hudR',h:'③ 약 성능과 투여량',b:'오른쪽은 지금 약의 성능이에요. 개발할 때마다 숫자가 <b class="good">초록</b>(좋아짐)/<b class="warn">주황</b>(나빠짐)으로 깜빡여요.<br><b>투여량</b>을 올리면 찌꺼기가 빨리 지워지지만 <b class="warn">부작용</b>(뇌 부종·출혈) 위험이 커져 신뢰도가 깎여요. 어떤 환자냐에 따라 알맞은 양이 달라요.'},
+ {t:'#ticker',h:'④ 뉴스와 경쟁사',b:'아래 <b class="bad">속보</b> 띠에 일어난 일이 나와요. 가끔 실제 있었던 일을 닮은 <b>사건 카드</b>가 떠서 선택을 요구해요, 정답은 지금 상황에 따라 달라요.<br>위쪽 <b>경쟁사 승인까지</b> 막대가 100%가 되면 경쟁사가 먼저 허가를 받아 최고 등급이 제한돼요. 준비되면 <b>II</b>(정지) 버튼이나 스페이스바로 시작하세요.'}];
+function coach(i){$$('.hl').forEach(function(e){e.classList.remove('hl');});var c=$('#coach');if(i<0||i>=STEPS.length){c.style.display='none';return;}
+  var s=STEPS[i];$(s.t).classList.add('hl');
+  c.innerHTML='<b>'+s.h+'</b><p>'+s.b+'</p><div class="nav"><button class="btn gh" id="cSkip">닫기</button><span class="dim">'+(i+1)+' / '+STEPS.length+'</span><span>'+(i?'<button class="btn gh" id="cPrev">이전</button> ':'')+'<button class="btn" id="cNext">'+(i===STEPS.length-1?'시작하기':'다음')+'</button></span></div>';
+  c.style.display='block';$('#cSkip').onclick=function(){coach(-1);};$('#cNext').onclick=function(){coach(i+1);};if(i)$('#cPrev').onclick=function(){coach(i-1);};}
+$('#bHelp').onclick=function(){if(st){st.paused=true;coach(0);}};
+$('#hintX').onclick=function(){$('#hint').dataset.off='1';};
+
+// ---------- 뇌 지도 ----------
+var svg=$('#brain'),NS='http://www.w3.org/2000/svg',regEl={},bubG;
+function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e;}
+function buildMap(){
+  svg.innerHTML='';
+  // 뇌 옆모습(오른쪽이 앞). 소뇌·뇌간 → 대뇌 외곽 → 엽(lobe) → 깊은 구조(해마·편도체·내후각피질)
+  el('path',{d:'M70 214 C84 250 136 268 176 246 C150 242 112 238 92 214Z',fill:'#16222f',stroke:'#2b3d55','stroke-width':2.5});
+  [0,1,2,3].forEach(function(i){el('path',{d:'M'+(84+i*14)+' '+(222+i*5)+' C'+(110+i*10)+' '+(236+i*3)+' '+(140+i*8)+' '+(240+i*1)+' '+(160+i*4)+' '+(240-i*0),fill:'none',stroke:'#2b3d55','stroke-width':1.2});});
+  el('path',{d:'M176 244 C182 262 184 280 190 292 L212 292 C212 276 214 256 222 246Z',fill:'#16222f',stroke:'#2b3d55','stroke-width':2.5});
+  el('path',{d:'M55 150 C50 95 95 48 165 40 C235 30 310 52 348 98 C376 132 372 172 346 192 C332 203 304 202 288 210 C270 222 258 246 222 246 C198 246 186 236 166 240 C138 246 108 236 90 212 C68 194 57 174 55 150Z',fill:'#1c2a3a',stroke:'#3a4a5e','stroke-width':3});
+  var LOBE={occ:'M55 150 C50 98 90 56 150 44 C152 80 158 130 166 166 C140 172 110 176 90 200 C68 190 57 172 55 150Z',
+   assoc:'M150 44 C185 38 220 36 250 40 C252 80 256 130 262 178 C230 176 196 170 166 166 C158 130 152 80 150 44Z',
+   sm:'M250 40 C260 42 270 44 278 46 C280 100 284 170 292 208 C282 204 270 190 262 178 C256 130 252 80 250 40Z',
+   pfc:'M278 46 C322 54 362 96 372 140 C376 170 354 192 340 198 C322 204 304 202 292 208 C284 170 280 100 278 46Z',
+   itc:'M90 206 C110 178 140 172 166 168 C200 174 240 180 262 182 C272 190 282 200 292 208 C274 220 262 244 224 246 C198 246 186 236 166 240 C138 246 108 236 90 206Z',
+   hippo:'M168 218 C180 200 214 198 232 214 C236 218 230 222 226 218 C212 208 190 208 178 224 C172 228 164 224 168 218Z',
+   amyg:'M243 213 a12 9 0 1 0 24 0 a12 9 0 1 0 -24 0Z',ento:'M221 232 a11 7 0 1 0 22 0 a11 7 0 1 0 -22 0Z'};
+  var BASE={occ:'#1f2f40',assoc:'#223445',sm:'#26394c',pfc:'#1f2f40',itc:'#1c2d3d',hippo:'#2d4660',amyg:'#2d4660',ento:'#2d4660'};
+  var ORDER=['occ','assoc','sm','pfc','itc','ento','hippo','amyg'],R={};REGIONS.forEach(function(r){R[r.id]=r;});
+  var SZ={occ:30,assoc:34,sm:20,pfc:36,itc:30,hippo:14,amyg:10,ento:9};
+  // 시냅스 경로(점선)
+  REGIONS.forEach(function(r){r.to.forEach(function(t){var o=R[t];el('line',{x1:r.xy[0],y1:r.xy[1],x2:o.xy[0],y2:o.xy[1],stroke:'#5d7390','stroke-width':1.6,'stroke-dasharray':'4 4',opacity:.7});});});
+  // 대뇌 주름(장식)
+  ['M110 90 C130 80 150 96 170 84','M180 70 C200 60 224 76 240 62','M290 80 C310 70 330 86 350 100','M300 150 C320 140 340 152 358 150','M96 160 C112 150 128 160 146 152','M190 150 C210 140 232 152 250 146','M120 196 C150 188 180 196 210 190'].forEach(function(d){el('path',{d:d,fill:'none',stroke:'#2b3d55','stroke-width':1.4,'stroke-linecap':'round'});});
+  ORDER.forEach(function(id){var r=R[id],deep=SZ[id]<15;
+    el('path',{d:LOBE[id],fill:BASE[id],'fill-opacity':deep?1:.55,stroke:deep?'#4a6a8a':'#3a4a5e','stroke-width':deep?1.8:1.4});});
+  // 위에 덮는 타우 층 + 아밀로이드 점 + 숫자
+  ORDER.forEach(function(id){var r=R[id],g=el('g',{}),deep=SZ[id]<15;
+    var c=el('path',{d:LOBE[id],fill:'#e0242b','fill-opacity':0,stroke:'#e0242b','stroke-width':deep?2:2.4,'stroke-opacity':0},g);
+    var amy=el('g',{},g);
+    var t=el('text',{x:r.xy[0],y:r.xy[1]+4,'text-anchor':'middle',fill:'#fff','font-size':deep?10:13,'font-weight':900,'pointer-events':'none','paint-order':'stroke',stroke:'#0a1220','stroke-width':3},g);
+    regEl[id]={c:c,t:t,ring:c,amy:amy,n:-1,sz:SZ[id]};});
+  // 이름표
+  var LAB={occ:[88,150,'후두엽'],assoc:[205,128,'두정 연합'],sm:[264,122,'감각운동'],pfc:[325,158,'전두엽'],itc:[130,226,'하측두엽'],hippo:[196,194,'해마'],amyg:[262,196,'편도체'],ento:[232,244,'내후각']};
+  Object.keys(LAB).forEach(function(k){el('text',{x:LAB[k][0],y:LAB[k][1],'text-anchor':'middle',fill:'#9db3c9','font-size':8.5,'font-weight':700,'pointer-events':'none','paint-order':'stroke',stroke:'#0a1220','stroke-width':2.5},svg).textContent=LAB[k][2];});
+  bubG=el('g',{});
+}
+buildMap();
+
+// ---------- 개발 트리 ----------
+function depth(id,tr,memo){if(memo[id]!==undefined)return memo[id];var n=NODE[id],d=0;n.req.concat(n.reqAny).forEach(function(r){if(NODE[r].tree===tr)d=Math.max(d,depth(r,tr,memo)+1);});return memo[id]=d;}
+function nState(n){if(st.owned.indexOf(n.id)>=0)return 'own';if(st.pipeline.some(function(p){return p&&p.nodeId===n.id;}))return 'run';var cb=canBuy(st,n.id);if(cb.ok)return 'buy';if(cb.why.some(function(w){return w.indexOf('배타')===0;}))return 'x';return 'lock';}
+function renderTree(){
+  $$('#evoTabs .pill').forEach(function(b){b.classList.toggle('on',b.dataset.t===tab);});
+  $$('#cats .rbtn').forEach(function(b){b.classList.toggle('on',b.dataset.t===tab&&$('#evoOv').classList.contains('show'));});
+  $('#evoRp').textContent='연구점수 '+st.rp.toFixed(0)+'';
+  var list=NODES.filter(function(n){return n.tree===tab;}),memo={},cols={},pos={},maxC=0,maxR=0;
+  list.forEach(function(n){var d=depth(n.id,tab,memo);cols[d]=(cols[d]||0)+1;pos[n.id]=[d,cols[d]-1];maxC=Math.max(maxC,d);maxR=Math.max(maxR,cols[d]);});
+  var W=70+(maxC+1)*130,H=60+maxR*105,h='<svg width="'+W+'" height="'+H+'">';
+  list.forEach(function(n){n.req.concat(n.reqAny).forEach(function(r){if(!pos[r])return;var a=pos[r],b=pos[n.id];h+='<line x1="'+(50+a[0]*130+32)+'" y1="'+(30+a[1]*105+32)+'" x2="'+(50+b[0]*130+32)+'" y2="'+(30+b[1]*105+32)+'" stroke="'+(st.owned.indexOf(r)>=0?'#3fe08a':'#3a4a5e')+'" stroke-width="4"/>';});});
+  h+='</svg>';
+  list.forEach(function(n){var s=nState(n),p=pos[n.id],c=nodeCost(st,n.id);
+    h+='<button class="nd '+s+(n.id===selId?' sel':'')+'" data-id="'+n.id+'" style="left:'+(50+p[0]*130)+'px;top:'+(30+p[1]*105)+'px">'+ico(n.id,30)+(s==='own'?'':'<span class="cost">'+c.rp+'</span>')+'<span class="nm">'+EASY[n.id][0]+'</span></button>';});
+  $('#tree').style.width=W+'px';$('#tree').style.height=H+'px';$('#tree').innerHTML=h;
+  $$('#tree .nd').forEach(function(b){b.onclick=function(){selId=b.dataset.id;renderTree();renderDesc();};});
+  renderDesc();
+}
+function renderDesc(){
+  if(!selId){return;}
+  var n=NODE[selId],e=EASY[selId],s=nState(n),cb=canBuy(st,selId),c=nodeCost(st,selId);
+  var why='';if(s==='lock'||s==='x'){why='<div class="rule" style="margin:6px 0 0"><b class="warn">아직 못 사요</b> '+cb.why.map(function(w){var m=w.match(/^선행: (\w+)$/);return m?'먼저 「'+EASY[m[1]][0]+'」 필요':w.replace(/^선행\(택1\): (.*)$/,function(_,l){return '다음 중 하나 필요: '+l.split(' 또는 ').map(function(x){return '「'+EASY[x][0]+'」';}).join(', ');}).replace(/^배타: (\w+) 보유로 영구 잠금/,function(_,x){return '「'+EASY[x][0]+'」를 이미 골라서 영구 잠금';});}).join(' / ')+'</div>';}
+  $('#desc').innerHTML='<h3>'+ico(n.id,20)+' '+e[0]+' <span class="dim" style="font-size:12px">['+CAT[n.tree][0]+']</span>'+(n.dH?' <span class="dim" style="font-size:12px">합성 필요(시간 걸림)</span>':' <span class="dim" style="font-size:12px">즉시 적용</span>')+'</h3>'+e[1]+
+   '<div><span class="g">+ '+e[2]+'</span> &nbsp; <span class="r">− '+e[3]+'</span></div><div class="dim" style="margin-top:3px">비용: '+costStr(c)+'</div>'+why+
+   '<details><summary>전문 용어로 / 실제 사례</summary><div>'+n.gain+' · '+n.tradeoff+'<br>'+n.concept+'</div></details>';
+  var aff=st.rp>=c.rp;$('#evoGo').disabled=!(s==='buy'&&aff);$('#evoGo').textContent=s==='own'?'보유 중':s==='run'?'합성 중':s==='buy'&&!aff?'연구점수 부족':'개발하기';
+}
+$('#evoGo').onclick=function(){if(selId)onNode(selId);};
+['A','B','C'].forEach(function(t){var b=document.createElement('button');b.className='pill';b.dataset.t=t;b.innerHTML=ico(CAT[t][2],18)+' '+CAT[t][0]+' <span style="font-weight:600;font-size:12px">'+CAT[t][1]+'</span>';b.style.display='inline-flex';b.style.gap='6px';b.style.alignItems='center';b.onclick=function(){tab=t;selId=null;renderTree();$('#desc').innerHTML='<span class="dim">동그라미를 눌러 설명을 보세요.</span>';};$('#evoTabs').appendChild(b);});
+function openEvo(t){if(!st)return;if(t)tab=t;$('#evoOv').classList.add('show');renderTree();}
+$('#bEvo').onclick=function(){openEvo();};$('#evoX').onclick=function(){$('#evoOv').classList.remove('show');$$('#cats .rbtn').forEach(function(b){b.classList.remove('on');});};
+$$('#cats .rbtn').forEach(function(b){b.innerHTML=ico(CAT[b.dataset.t][2],26)+'<small>'+CAT[b.dataset.t][0]+'</small>';b.onclick=function(){openEvo(b.dataset.t);};});
+
+// ---------- 합성 조건 선택 ----------
+function onNode(id){
+  var n=NODE[id],cb=canBuy(st,id);if(!cb.ok){say(st,id+' 구매 불가: '+cb.why.join(', '));return;}
+  if(n.dH===0){var r=buy(st,id);if(r!==true)say(st,r);else beep(660,.15);renderTree();return;}
+  var c=nodeCost(st,id),prot=isProtein(st,n);
+  var cu=st.pipeline.filter(function(p){return p&&p.cond==='cool';}).length,hu=st.pipeline.filter(function(p){return p&&p.cond==='heat';}).length;
+  $('#pickBox').innerHTML='<h2>'+EASY[id][0]+', 어떻게 만들까요?</h2><p>약을 만드는 화학 반응의 <b>환경</b>을 고르세요. 알맞게 고르면 빨리 만들어지고, 틀리면 느려져요.</p>'+
+   '<div class="rule"><b>지금 상황</b><br>· 이 반응은 <b>'+(n.dH<0?'열을 내는(발열)':'열을 먹는(흡열)')+'</b> 반응이에요<br>· 지금 만드는 약은 <b>'+(prot?'항체(단백질)':'작은 분자')+'</b><br>· 냉각기 '+cu+'/2 사용 중 · 가열기 '+hu+'/2 사용 중</div>'+
+   '<div class="rule"><b>고르는 법</b> ① 열을 내는 반응은 식히고, 열을 먹는 반응은 데우면 잘 돼요 (르샤틀리에 원리). ② 단백질(항체)은 데우면 굳어서 망가져요 → 항상 식히기. ③ 냉각기·가열기는 2대뿐이라 꽉 차면 효율이 떨어져요. 이럴 땐 실험실에서 만든 아세트산(촉매)이 도움이 돼요. ④ 에탄올 용매는 작은 분자 약엔 득, 항체엔 독이에요.</div>'+
+   ['cool','heat','catalyst'].map(function(k){return '<button class="ch" data-c="'+k+'">'+CONDK[k]+'<small>'+({cool:'식혀서 반응시키기',heat:'데워서 반응시키기',catalyst:'아세트산 1개로 속도 올리기 (보유 '+st.lab.acetic+')'})[k]+'</small></button>';}).join('')+
+   '<label class="rule" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="solv"> 에탄올 용매 쓰기 (보유 '+st.lab.ethanol+')</label><button class="btn gh" data-c="" style="margin-top:6px">취소</button> <span class="dim" style="font-size:12px">'+costStr(c)+'</span>';
+  $('#pick').classList.add('show');
+  $$('#pickBox [data-c]').forEach(function(b){b.onclick=function(){$('#pick').classList.remove('show');if(!b.dataset.c)return;var sv=$('#solv')&&$('#solv').checked;var r=buy(st,id,b.dataset.c,sv);if(r!==true)say(st,r);else{beep(520,.12);burst(b);}renderTree();};});
+}
+
+// ---------- 합성 실험실 ----------
+var labEl=document.createElement('div');labEl.className='ov';labEl.id='labOv';labEl.innerHTML='<div class="card"><div class="in" id="labBox"></div></div>';document.body.appendChild(labEl);
+function renderLab(){
+  var h='<h2 style="margin-top:0">합성 실험실</h2><p class="dim" style="margin-top:0">원료(탄소·수소·산소·질소)로 화합물을 만들어요. 만든 화합물은 <b>합성할 때 재료</b>로 쓰거나, <b>약에 작용기로 붙여</b> 성능을 바꿀 수 있어요. 작용기는 '+K.MAX_GROUPS+'개까지, 한 번 붙이면 떼지 못해요.</p>'+
+   '<div class="rule">시약 주문: 연구점수 '+orderCost(st)+'로 원료 '+K.ORDER_ATOMS+'개 (주문할수록 비싸져요) '+['C','H','O','N'].map(function(a){return '<button class="btn gh" data-o="'+a+'" style="padding:3px 10px;font-size:12px">'+ATOM[a]+'</button>';}).join(' ')+'</div><div class="rule">내 원료 '+['C','H','O','N'].map(function(a){return ATOM[a]+' <b>'+st.atoms[a]+'</b>';}).join(' · ')+' &nbsp; 붙인 작용기 <b>'+st.groups.length+'/'+K.MAX_GROUPS+'</b></div>';
+  Object.keys(LAB).forEach(function(id){var x=LAB[id],can=true,need=Object.keys(x.atoms).map(function(a){var ok=st.atoms[a]>=x.atoms[a];if(!ok)can=false;return '<span style="color:'+(ok?'var(--dim)':'#ff7a7a')+'">'+ATOM[a]+' '+x.atoms[a]+'</span>';}).join(' ');
+    var att=st.groups.indexOf(id)>=0;
+    h+='<div class="rule lab" data-id="'+id+'"><b style="font-size:16px">'+x.ko+'</b> <span class="dim">'+x.f+'</span> <span class="g" style="float:right">보유 '+st.lab[id]+'개</span><div class="dim" style="margin:4px 0">'+x.use+'</div><div style="margin:4px 0">필요 원료: '+need+'</div>'+
+     '<button class="btn" data-a="mk" '+(can?'':'disabled')+' style="padding:6px 14px">합성하기</button> <button class="btn gh" data-a="at" '+((st.lab[id]<1||att||st.groups.length>=K.MAX_GROUPS)?'disabled':'')+' style="padding:6px 14px">'+(att?'이미 붙임':'약에 붙이기: '+GROUPS[id].ko)+'</button></div>';});
+  h+='<div style="text-align:right;margin-top:8px"><button class="btn" id="labX">닫기</button></div>';
+  $('#labBox').innerHTML=h;$('#labX').onclick=function(){labEl.classList.remove('show');};
+  $$('#labBox [data-o]').forEach(function(b){b.onclick=function(){var res=labOrder(st,b.dataset.o);if(res!==true)say(st,res);else{beep(500,.12);burst(b);}renderLab();};});
+  $$('#labBox .lab').forEach(function(d){d.querySelectorAll('button[data-a]').forEach(function(b){b.onclick=function(){var id=d.dataset.id,res=b.dataset.a==='mk'?labCraft(st,id):labAttach(st,id);if(res!==true)say(st,res);else{beep(b.dataset.a==='mk'?740:560,.18);burst(b);}renderLab();};});});
+}
+function openLab(){if(!st)return;labEl.classList.add('show');renderLab();}
+document.addEventListener('click',function(e){if(e.target&&e.target.id==='bLab')openLab();});
+function burst(el){try{var r=el.getBoundingClientRect(),n=10;for(var i=0;i<n;i++){var p=document.createElement('i');p.className='spk';var a=i/n*6.283,d=30+Math.random()*30;p.style.left=(r.left+r.width/2)+'px';p.style.top=(r.top+r.height/2)+'px';p.style.setProperty('--dx',Math.cos(a)*d+'px');p.style.setProperty('--dy',Math.sin(a)*d+'px');document.body.appendChild(p);setTimeout((function(q){return function(){if(q.parentNode)q.parentNode.removeChild(q);};})(p),700);}}catch(e){}}
+// ---------- 이벤트 ----------
+function showEvent(){
+  var ev=EVENTS.filter(function(e){return e.id===st.event.id;})[0];resumeAfter=!st.paused;st.paused=true;evOpen=true;beep(300,.3,'square');
+  $('#evHd').textContent='속보 · '+ev.title;
+  $('#evBox').innerHTML='<p style="font-size:16px;margin-top:0">'+ev.text+'</p>'+(ev.real?'<div class="rule"><b>실제 배경</b> '+ev.real+' <span class="dim">(이 게임의 수치·결과는 가상)</span></div>':'')+
+   ev.ch.map(function(c,i){return '<button class="ch" data-i="'+i+'">'+c.l+'<small>'+c.d+'</small></button>';}).join('');
+  
+  $('#event').classList.add('show');
+  $$('#evBox [data-i]').forEach(function(b){b.onclick=function(){
+    var i=+b.dataset.i,best=st.event.best;resolveEvent(st,i);var lg=st.log[st.log.length-1];
+    $('#evBox').innerHTML='<h2 class="'+(lg.good?'good':'bad')+'">'+(lg.good?'좋은 선택이었어요':'아쉬운 선택이었어요')+'</h2><p>'+clean(st.news[0].replace(/^[] /,''))+'</p>'+
+      (lg.good?'':'<div class="rule"><b>이번 상황의 정답</b> '+lg.best+'<br>'+lg.why+'</div>')+'<div style="text-align:right"><button class="btn" id="evOk">계속</button></div>';
+    $('#evOk').onclick=function(){$('#event').classList.remove('show');evOpen=false;st.paused=!resumeAfter;if(resumeAfter)st.paused=false;};
+    beep(lg.good?700:200,.2);};});
+}
+
+// ---------- 컨트롤 ----------
+$('#dose').oninput=function(){st.dose=+this.value;};
+function toggle(){if(evOpen)return;st.paused=!st.paused;}
+$('#bPause').onclick=toggle;
+$$('[data-sp]').forEach(function(b){b.onclick=function(){if(evOpen)return;st.speed=+b.dataset.sp;st.paused=false;};});
+$('#x4').onclick=function(){useEarly(st);};
+$('#mute').onclick=function(){muted=!muted;this.textContent=muted?'소리 끔':'소리 켬';};
+addEventListener('keydown',function(e){if(e.code==='Space'&&st&&!$('#evoOv').classList.contains('show')){e.preventDefault();toggle();}});
+
+// ---------- HUD ----------
+function build(){
+  $('#hudTop').innerHTML='<div class="gz"><div class="l">인지 기능 <b id="vCog"></b></div><div class="bar"><i id="bCog" style="background:var(--blue)"></i></div></div>'+
+   '<div class="gz"><div class="l">신뢰도 <b id="vTr"></b></div><div class="bar"><i id="bTr" style="background:var(--green)"></i></div></div>'+
+   '<div class="gz" title="뇌 전체 아밀로이드 평균. 20 미만이 목표"><div class="l">아밀로이드 <b id="vAmy"></b></div><div class="bar"><i id="bAmy" style="background:var(--amber)"></i></div></div>'+
+   '<div class="gz" title="100%가 되면 경쟁사가 먼저 허가를 받아요"><div class="l">경쟁사 승인까지 <b id="vRv"></b></div><div class="bar"><i id="bRv" style="background:var(--red)"></i></div></div>';
+  $('#mats').innerHTML='<div class="matH">실험실 원료<br><small>화합물 합성에 써요<br>(한정 재고)</small></div>'+['C','H','O','N'].map(function(a){return '<div class="mat" title="'+ATOMTIP+'" id="m'+a+'"><b>'+a+'</b><i>'+ATOM[a]+'</i><span></span></div>';}).join('')+'<button class="btn" id="bLab" style="padding:6px 12px;font-size:13px">실험실 열기</button>';
+  
+  var rows=[['up','뇌 장벽 통과율','약이 뇌 혈관벽을 넘어 뇌에 들어가는 비율. 높을수록 좋아요.'],['th','표적에 붙는 정도','뇌 속 약 중 병의 원인(아밀로이드)에 실제로 붙는 비율.'],['cl','찌꺼기 제거 속도','아밀로이드를 주당 얼마나 지우나.'],['ts','타우 번짐 속도','1.00이 기본. 낮을수록 타우가 천천히 번져요.'],['ar','부작용 위험 (월)','뇌 부종·출혈(ARIA) 위험. 높으면 신뢰도가 깎여요.']];
+  $('#stats').innerHTML=rows.map(function(r){return '<div class="st" title="'+r[2]+'" id="s_'+r[0]+'"><div class="l"><span>'+r[1]+'</span><b></b></div><div class="bar"><i></i></div><small>'+r[2]+'</small></div>';}).join('');
+  
+  paint();
+}
+function setS(k,txt,pct,val,goodUp){var e=$('#s_'+k);e.querySelector('b').textContent=txt;e.querySelector('i').style.width=Math.max(2,Math.min(100,pct))+'%';var p=prev[k];prev[k]=val;if(p!==undefined&&Math.abs(p-val)>1e-9){var up=val>p;e.classList.remove('fu','fd');void e.offsetWidth;e.classList.add(up===goodUp?'fu':'fd');}}
+function paint(){
+  var d=st.drug,dv=derive(st),am=amyAvg(st);
+  var rv=st.rp.toFixed(0);if($('#rp').textContent!==rv){$('#rp').textContent=rv;var rb=$('#rp');rb.classList.remove('pop');void rb.offsetWidth;rb.classList.add('pop');}
+  $('#date').innerHTML='<b>'+(st.week/4.33).toFixed(1)+'개월</b> / 36개월 · '+PROFILES[st.profile].ko;
+  $('#vCog').textContent=Math.max(0,st.cognition).toFixed(0)+'%';$('#bCog').style.width=Math.max(0,st.cognition)+'%';
+  $('#vTr').textContent=Math.max(0,st.trust).toFixed(0);$('#bTr').style.width=Math.max(0,Math.min(100,st.trust))+'%';
+  $('#vAmy').textContent=am.toFixed(0)+' (목표 <20)';$('#bAmy').style.width=am+'%';
+  $('#vRv').textContent=st.rival.toFixed(0)+'%'+(st.rivalWon?' 승인됨':'');$('#bRv').style.width=st.rival+'%';
+  ['C','H','O','N'].forEach(function(a){$('#m'+a+' span').textContent=st.atoms[a];});
+  setS('up',d.uptake.toFixed(d.uptake<1?2:1)+'%',Math.log10(d.uptake*10+1)/3*100,d.uptake,true);
+  setS('th',(dv.theta*100).toFixed(0)+'%',dv.theta*100,dv.theta,true);
+  setS('cl',(dv.clear*100).toFixed(2)+'%/주',dv.clear/.1*100,dv.clear,true);
+  setS('ts','×'+(dv.tauSpread/K.SPREAD_RATE).toFixed(2),dv.tauSpread/K.SPREAD_RATE*50,dv.tauSpread,false);
+  setS('ar',(dv.aria*100).toFixed(1)+'%',dv.aria*100*4,dv.aria,false);
+  $('#doseV').textContent=st.dose.toFixed(1);$('#dose').value=st.dose;
+  $('#raw').innerHTML='분자량 '+(d.MW>1e4?(d.MW/1000).toFixed(0)+' kDa':d.MW.toFixed(0)+' Da')+(d.type==='ab'?' (항체)':' (소분자)')+' · Kd '+d.Kd.toFixed(2)+' · BBB점수 '+d.bbbScore.toFixed(2)+(d.type==='ab'?'':' · logP '+d.logP.toFixed(1)+' · HBD '+d.HBD+' · TPSA '+d.TPSA.toFixed(0));
+  st.regions.forEach(function(r){var e=regEl[r.id],hot=r.tau>K.TAU_THRESHOLD;e.c.setAttribute('fill-opacity',(r.tau/100*.85).toFixed(2));
+    e.c.setAttribute('stroke-opacity',hot?(.35+.55*Math.abs(Math.sin(st.week*.25))).toFixed(2):0);e.t.textContent=r.tau.toFixed(0);
+    var n=Math.round(r.amy/100*7);if(n!==e.n){e.n=n;e.amy.innerHTML='';var s=e.sz;for(var i=0;i<n;i++){var a=i*2.399+r.xy[0],rad=s*(.35+.65*((i*37%10)/10));el('circle',{cx:r.xy[0]+Math.cos(a)*rad*.9,cy:r.xy[1]+Math.sin(a)*rad*.6,r:s<15?1.6:2.3,fill:'#ffb454','pointer-events':'none'},e.amy);}}});
+  var key=st.bubbles.map(function(b){return b.id;}).join(',');
+  if(key!==bubKey){bubKey=key;bubG.innerHTML='';st.bubbles.forEach(function(b){var g=el('g',{class:'bub'},bubG);el('circle',{cx:b.x,cy:b.y,r:13,fill:'#3fe08a',stroke:'#b9ffd5','stroke-width':2},g);var t=el('text',{x:b.x,y:b.y+3.5,'text-anchor':'middle','font-size':8.5,'font-weight':900,fill:'#05301a','pointer-events':'none'},g);t.textContent='논문';g.onclick=function(){collectBubble(st,b.id);beep(880,.1);};});}
+  var ph='';st.pipeline.forEach(function(p,i){ph+=p?'<div class="slot run" data-i="'+i+'" title="클릭: 취소(투입 자원 50% 환급)">'+ico(p.nodeId,16)+' <b>'+EASY[p.nodeId][0]+'</b><div class="pb"><i style="width:'+(p.progress*100).toFixed(0)+'%"></i></div>'+CONDK[p.cond]+(p.mult<1?' <span class="w">수율 저하</span>':'')+'</div>':'<div class="slot empty">합성 칸 '+(i+1)+'</div>';});
+  if($('#pipe').dataset.h!==ph){$('#pipe').dataset.h=ph;$('#pipe').innerHTML=ph;}
+  var nx0=nextRec(),sm=st.regions.filter(function(r){return r.id==='sm';})[0],hot=sm.tau>=25||st.cognition<60||st.trust<40||st.rival>=80;
+  $('#danger').classList.toggle('on',hot&&!st.over);
+  var g=$('#goal'),run=st.pipeline.filter(Boolean)[0],gt='';
+  if(!st.owned.length&&!run&&nx0){var cc=nodeCost(st,nx0[0]).rp;gt='<b>지금 할 일</b> 왼쪽 아래 <b>개발</b> 버튼을 눌러 「'+EASY[nx0[0]][0]+'」을 만드세요. 필요한 연구점수 '+cc+(st.rp>=cc?'':' (지금 '+st.rp.toFixed(0)+', 조금 모아야 해요)');}
+  else if(run&&!nx0){gt='<b>지금 할 일</b> 합성이 끝나길 기다리세요.';}
+  else if(nx0){var c2=nodeCost(st,nx0[0]).rp;gt=st.rp>=c2?'<b>지금 할 일</b> 연구점수 '+st.rp.toFixed(0)+'로 「'+EASY[nx0[0]][0]+'」을 개발하세요 (필요 '+c2+').':'<b>지금 할 일</b> 연구점수를 모으는 중이에요. 「'+EASY[nx0[0]][0]+'」까지 '+Math.ceil(c2-st.rp)+'점 남았어요.';}
+  else gt='<b>지금 할 일</b> 투여량을 조절하고 이벤트에 대비하세요.';
+  if(run)gt+=' <span class="dim">합성 중: '+EASY[run.nodeId][0]+' (약 '+Math.ceil(Math.max(0,run.total-run.progress)/st.speed)+'초)</span>';
+  gt+='<br>'+(sm.tau>=25?'<span class="w">감각운동 타우 '+sm.tau.toFixed(0)+'/50</span>':'감각운동 타우 '+sm.tau.toFixed(0)+'/50')+' 가 50이 되면 패배 · 경쟁사 승인 '+st.rival.toFixed(0)+'%';
+  g.innerHTML=gt;
+  var nx=nx0,h=$('#hint');
+  if(nx&&!h.dataset.off){$('#hintT').innerHTML='<b>추천</b> '+ico(nx[0],16)+' '+EASY[nx[0]][0]+'<br><span class="dim">'+nx[1]+'</span>';h.style.display='block';}else h.style.display='none';
+  $('#bEvo').classList.toggle('pulse',!!nx);
+  $('#news').textContent=clean(st.news[0]||'');$('#bPause').textContent=st.paused?'▶':'II';
+  $('#x4').style.display=st.combos.indexOf('X4')>=0&&!st.earlyUsed?'block':'none';
+}
+$('#pipe').onclick=function(e){var s=e.target.closest('[data-i]');if(s&&confirm('합성을 취소하면 투입 자원의 50%만 돌려받아요. 취소할까요?')){cancel(st,+s.dataset.i);renderTree();}};
+
+// ---------- 결과 화면 ----------
+var BK='neuroinc.best';
+function showEnd(){
+  var o=st.over,best=null;try{best=JSON.parse(localStorage.getItem(BK)||'null');}catch(e){}
+  var rank={S:4,A:3,B:2},sc=o.win?rank[o.grade]*1000+Math.round(o.cognition):0,nb=best&&best.sc>=sc?best:{sc:sc,grade:o.win?o.grade:'-',cog:Math.round(o.cognition)};
+  if(sc>0&&(!best||sc>best.sc))try{localStorage.setItem(BK,JSON.stringify(nb));}catch(e){}
+  var bad=st.log.filter(function(l){return!l.good;}),goods=st.log.filter(function(l){return l.good;}).length;
+  var tl=bad.slice(0,8).map(function(l){return '<div class="tl b"><b>'+(l.kind==='chem'?'합성 조건 · ':'사건 · ')+clean(l.kind==='chem'?l.title.split(' ')[0]:l.title)+'</b>, 내 선택: '+l.pick+(l.best?' / 정답: '+l.best:'')+'<br><span class="dim">'+clean(l.why)+'</span></div>';}).join('');
+  
+  var tip=o.win?'':'<div class="rule"><b>다음엔?</b> '+(st.profile==='advanced'?'이 환자들은 타우가 이미 퍼져 있어요, 항타우 약을 일찍 준비하세요.':st.profile==='apoe4'?'이 환자들은 부작용에 약해요, 유전자 검사와 낮은 투여량이 핵심이에요.':'이 환자들은 반응이 좋아요, 찌꺼기를 강하게 지우되 MRI는 꼭 두세요.')+'</div>';
+  $('#endBox').innerHTML='<div style="display:flex;align-items:center;gap:18px"><div class="rp" style="width:96px;height:96px;border-color:'+(o.win?'var(--green)':'var(--red)')+'"><b style="font-size:38px;color:'+(o.win?'var(--green)':'var(--red)')+'">'+(o.win?o.grade:'×')+'</b></div><div><h2 style="margin:0">'+(o.win?'승리':'패배')+'</h2><div>'+o.why+'</div></div></div>'+
+   '<p>환자 유형 <b>'+PROFILES[st.profile].ko+'</b> · 난이도 '+DIFF[st.diff].ko+' · 인지 '+o.cognition.toFixed(0)+'% · 신뢰도 '+Math.max(0,o.trust).toFixed(0)+' · 아밀로이드 '+o.amy.toFixed(0)+(st.rivalWon?' · <span class="bad">경쟁사 먼저 승인(최고 B)</span>':'')+'</p>'+
+   '<p class="dim">내 선택 중 좋은 판단 '+goods+'개 / 아쉬운 판단 '+bad.length+'개 · 최고 기록 '+nb.grade+' (인지 '+nb.cog+'%)</p>'+tip+(tl?'<b>다시 보기, 상황에 맞는 선택은?</b>'+tl:'<div class="rule">모든 선택이 상황에 딱 맞았어요!</div>')+
+   '<p class="dim" style="font-size:12px">모든 수치는 교육용 단순화값입니다. 사건 카드는 실제 사례에서 영감을 받은 가상 시나리오입니다.</p><div style="text-align:right"><button class="btn" onclick="location.reload()">다시 하기</button></div>';
+  $('#end').classList.add('show');beep(o.win?880:150,.5);
+}
+var lastOwned=0;
+function frame(t){
+  if(st&&!st.over){var dt=Math.min(.25,(t-last)/1000);acc+=dt;
+    while(acc>=.1){acc-=.1;if(!st.paused&&!st.event){var pre=st.owned.length,pn=st.news[0];step(st,.1*st.speed*K.WEEKS_PER_SEC);
+      if(st.news[0]!==pn&&/ARIA|이상 소견|미세출혈/.test(st.news[0]))beep(240,.25,'sawtooth');
+      if(st.lastCombo){var c=st.lastCombo;st.lastCombo=null;
+        if(c.warn){st.paused=true;alert('소분자 전환: 뇌 장벽은 쉬워지지만 질병을 늦추는 힘(제거 속도)이 절반으로 줄었어요. 도네페질 같은 소분자 약이 증상은 완화해도 병의 진행은 못 막는 것과 같은 구도예요.');}
+        var b=$('#banner');b.textContent='조합 보너스 해금 · '+c.name;b.style.display='block';setTimeout(function(){b.style.display='none';},3000);}
+      if(st.owned.length!==pre){beep(660,.18);if($('#evoOv').classList.contains('show'))renderTree();}}}
+    if(st.event&&!evOpen)showEvent();
+    paint();if($('#evoOv').classList.contains('show')&&Math.floor(t/500)!==lastOwned){lastOwned=Math.floor(t/500);renderTree();}
+    if(st.over)showEnd();
+  }
+  last=t;requestAnimationFrame(frame);
+}
+requestAnimationFrame(function(t){last=t;frame(t);});
+window.__dbg={get st(){return st;},simulate:simulate};
+})();
+</script>
+</body>
+</html>
