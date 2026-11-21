@@ -280,7 +280,14 @@ var WAVES=[
 var WAVE_WEEKS=[26,62,100];
 var PHASES=['평시','확산 시작','광범위 확산','위기'];
 function phaseOf(st){var n=st.regions.filter(function(r){return r.tau>=20;}).length;return n>=5?3:n>=3?2:n>=1?1:0;}
-function achievements(st){var o=st.over||{};return [{ko:'부작용 없이 완주',ok:!!o.win&&st.ariaCount===0},{ko:'경쟁사 승인 전에 완주',ok:!!o.win&&!st.rivalWon},{ko:'작용기 3개 장착',ok:st.groups.length>=K.MAX_GROUPS},{ko:'연구점수 100 이상 남김',ok:!!o.win&&st.rp>=100}];}
+function achievements(st){var o=st.over||{};return [{ko:'부작용 없이 완주',ok:!!o.win&&st.ariaCount===0},{ko:'경쟁사 승인 전에 완주',ok:!!o.win&&!st.rivalWon},{ko:'작용기 3개 장착',ok:st.groups.length>=K.MAX_GROUPS},{ko:'연구점수 100 이상 남김',ok:!!o.win&&st.rp>=100},{ko:'첫 임상 시험 통과',ok:!!st.trialPassed},{ko:'실패 뒤 재설계로 통과',ok:!!st.redesign},{ko:'도감 완성',ok:Object.keys(st.disc||{}).length>=Object.keys(LAB).length}];}
+var ADVISORS={
+ safety:{ko:'안전성 자문위원',d:'부작용 위험 15% 감소',fx:function(st){st.ariaPerm*=.85;}},
+ tau:{ko:'타우 연구 자문위원',d:'타우 확산 10% 감소',fx:function(st){st.tauPerm*=.9;}},
+ fund:{ko:'연구비 자문위원',d:'연구점수 수급 10% 증가',fx:function(st){st.rpPerm*=1.1;}},
+ reg:{ko:'규제 자문위원',d:'경쟁사 진행 10% 느려짐',fx:function(st){st.rivalRate*=.9;}},
+ patient:{ko:'환자단체 자문위원',d:'신뢰도 +10으로 시작',fx:function(st){st.trust=Math.min(100,st.trust+10);}}};
+function applyAdvisor(st,id){var a=ADVISORS[id];if(!a||st.adv)return false;a.fx(st);st.adv=id;return true;}
 var DIFF={easy:{ko:'쉬움',aria:.8,spread:.8,rival:190},normal:{ko:'보통',aria:1,spread:1,rival:135},hard:{ko:'어려움',aria:1.25,spread:1.2,rival:105}};
 function amyAvg(st){return st.regions.reduce(function(s,r){return s+r.amy;},0)/8;}
 function rawApoe4(st){return st.profile==='apoe4'&&!st.drug.flags.apoe;}
@@ -355,6 +362,18 @@ var EVENTS=[
   best:function(st){return st.trust<70?1:(st.rival>55?0:2);},
   why:function(st,b){return b===1?'신뢰도가 낮다면 가격보다 안전성 근거로 차별화해야 합니다.':b===0?'경쟁사가 앞서 가고 있다면 가격으로 시간을 벌어야 합니다.':'지금 우위가 있다면 불필요한 출혈 대신 연구에 집중하세요.';},
   act:function(st,i){if(i===0){st.rpPerm*=.95;st.rival=Math.max(0,st.rival-6);return '가격 인하로 경쟁사를 늦췄습니다.';}if(i===1){st.trust+=4;return '안전성 근거가 호평을 받았습니다.';}return '연구에 집중합니다.';}},
+ {id:'congress',min:10,max:150,ok:function(st){return !!(st.lastTrial&&st.lastTrial.pass);},
+  title:'학회 초청: 임상 결과 발표',text:'지난 임상 시험 통과 소식에 국제 학회가 발표를 요청했습니다. 어디까지 공개할지 정해야 합니다.',
+  ch:[{l:'데이터 전면 공개',d:'신뢰도 +6, 경쟁사 진행 +4'},{l:'핵심만 발표',d:'신뢰도 +2, 연구점수 +10'},{l:'발표 사양',d:'변화 없음'}],
+  best:function(st){return st.trust<70?0:1;},
+  why:function(st,b){return b===0?'신뢰도가 낮을 땐 경쟁사에 정보를 주더라도 투명성으로 신뢰를 쌓는 편이 낫습니다.':'신뢰도에 여유가 있으니 핵심만 알리고 연구 자원을 챙기는 편이 효율적입니다.';},
+  act:function(st,i){if(i===0){st.trust+=6;st.rival=Math.min(99,st.rival+4);return '전면 공개로 신뢰를 얻었지만 경쟁사도 힌트를 얻었습니다.';}if(i===1){st.trust+=2;st.rp+=10;return '핵심 결과만 발표했습니다.';}return '발표를 미뤘습니다.';}},
+ {id:'trial_press',min:20,max:150,ok:function(st){return (st.trialFails||0)>=2&&!!(st.lastTrial&&!st.lastTrial.pass);},
+  title:'언론: 임상 연속 실패',text:'임상 시험이 연달아 통과하지 못했다는 기사가 나왔습니다. 투자자와 환자들이 불안해합니다.',
+  ch:[{l:'재설계 계획 공개',d:'연구점수 −10, 신뢰도 +5'},{l:'공식 대응 없음',d:'신뢰도 −5'}],
+  best:function(st){return st.rp>=10?0:1;},
+  why:function(st,b){return b===0?'연구점수 여유가 있다면 다음 설계 계획을 보여 주는 편이 신뢰 하락을 막습니다.':'연구점수가 바닥이라면 지금은 버티고 다음 시험에 집중해야 합니다.';},
+  act:function(st,i){if(i===0){st.rp=Math.max(0,st.rp-10);st.trust+=5;return '다음 설계 계획을 공개해 불안을 달랬습니다.';}st.trust-=5;return '침묵이 불신을 키웠습니다.';}},
  {id:'cms_registry',real:'미국 메디케어는 항아밀로이드 항체를 환자 등록(레지스트리) 조건으로 급여했습니다.',min:45,max:125,ok:function(){return true;},
   title:'보험 급여 조건: 환자 등록 의무',text:'보험당국이 급여 조건으로 모든 투약 환자를 장기 등록(레지스트리)하라고 요구했습니다. 행정 부담이 큽니다.',
   ch:[{l:'조건 수용',d:'RP −15, 신뢰도 +6'},{l:'조건 완화 협상',d:'RP −5, 신뢰도 +3'},{l:'거부',d:'신뢰도 −6'}],
@@ -468,7 +487,7 @@ function runTrial(st){
   st.rp-=c;st.trials=(st.trials||0)+1;st.trialNext=st.week+K.TRIAL_CD;
   var ev=trialEval(st),gain=(ev.score-(st.lastScore||0))/Math.max(.001,st.lastScore||0),pass=ev.score>=K.TRIAL_OK||gain>=K.TRIAL_NEED;
   var rep={pass:pass,num:st.trials,cost:c,score:ev.score,gain:gain,key:ev.rep.key,ko:ev.rep.ko,tip:ev.rep.tip,reward:0};
-  if(pass){st.trust=Math.min(100,st.trust+8);rep.reward=c*2;st.rp+=rep.reward;}else st.rp+=4;
+  if(pass){st.trust=Math.min(100,st.trust+8);rep.reward=c*2;st.rp+=rep.reward;st.trialPassed=(st.trialPassed||0)+1;if(st.trialFails)st.redesign=1;}else{st.rp+=4;st.trialFails=(st.trialFails||0)+1;}
   st.lastScore=Math.max(st.lastScore||0,ev.score);st.lastTrial=rep;
   say(st,'임상 시험 '+rep.num+'차 '+(pass?'통과. 신뢰도 +8, 연구점수 +'+rep.reward:'미통과. '+rep.ko));
   return {ok:true,rep:rep};}
@@ -680,13 +699,16 @@ Object.keys(DIFF).forEach(function(k){var b=document.createElement('button');b.c
 var scn='std';Object.keys(SCN).forEach(function(k){var b=document.createElement('button');b.className='pill'+(k===scn?' on':'');b.textContent=SCN[k].ko;b.title=SCN[k].d;b.dataset.s=k;b.onclick=function(){scn=k;$$('#scns .pill').forEach(function(x){x.classList.toggle('on',x.dataset.s===k);});};$('#scns').appendChild(b);});
 var selCo=Object.keys(COMPANIES)[0],TAG=['추천 · 첫 플레이','','고난도'];Object.keys(COMPANIES).forEach(function(k,i){var c=COCO[k],b=document.createElement('button');b.className='co'+(i===0?' on':'');b.dataset.k=k;b.innerHTML='<span class="ic">'+c[0]+'</span><span><b>'+c[1]+'</b><small>'+c[2]+'</small>'+(TAG[i]?'<em class="tg'+(i===2?' hd':'')+'">'+TAG[i]+'</em>':'')+'</span>';b.onclick=function(){selCo=k;$$('#cos .co').forEach(function(x){x.classList.toggle('on',x.dataset.k===k);});};$('#cos').appendChild(b);});
 $('#goBtn').onclick=function(){start(selCo);};
+var AK='neuroinc.adv',selAdv=null;function advGet(){try{return JSON.parse(localStorage.getItem(AK)||'[]');}catch(e){return [];}}
+function advBox(){var a=advGet();selAdv=null;if(!a.length)return '<div class="rule dim">자문위원: 아직 없어요. 승리할 때마다 한 명이 합류해요.</div>';return '<div class="rule"><b>자문위원 선임</b> <span class="dim">한 명만 고를 수 있어요</span><div id="advs" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'+a.map(function(id){return ADVISORS[id]?'<button class="pill" data-a="'+id+'" title="'+ADVISORS[id].d+'">'+ADVISORS[id].ko+' · '+ADVISORS[id].d+'</button>':'';}).join('')+'</div></div>';}
+function advUnlock(){var a=advGet(),left=Object.keys(ADVISORS).filter(function(k){return a.indexOf(k)<0;});if(!left.length)return null;var k=left[Math.floor(Math.random()*left.length)];a.push(k);try{localStorage.setItem(AK,JSON.stringify(a));}catch(e){}return k;}
 function start(c){
   st=newState(c,Date.now()&0xffff,diff,undefined,scn);st.paused=true;$('#start').classList.remove('show');
   var P=PROFILES[st.profile],r=REC[st.profile][0];
   $('#briefBox').innerHTML='<div class="logo" style="font-size:26px">이번 임상 환자들</div><h2 style="margin-top:12px" class="warn">'+P.ko+'</h2><p>'+P.brief+'</p>'+
    '<div class="rule">처음 할 일: <b>'+EASY[r[0]][0]+'</b>, '+r[1]+'</div>'+
-   '<div class="rule"><b>목표</b> 3년 안에 기억력 50% 이상, 아밀로이드 20 미만.<br><b>패배</b> 타우가 맨 위 감각운동피질에 닿거나, 신뢰도 0, 기억력 25% 미만.<br><span class="dim">스페이스바로 멈춰요. 멈춘 동안 천천히 생각해도 돼요.</span></div><div style="text-align:right"><button class="btn" id="briefGo">시작하기</button></div>';
-  $('#brief').classList.add('show');$('#briefGo').onclick=function(){$('#brief').classList.remove('show');build();var seen=false;try{seen=localStorage.getItem('neuroinc.tut')==='1';}catch(e){}if(!seen)coach(0);};
+   advBox()+'<div class="rule"><b>목표</b> 3년 안에 기억력 50% 이상, 아밀로이드 20 미만.<br><b>패배</b> 타우가 맨 위 감각운동피질에 닿거나, 신뢰도 0, 기억력 25% 미만.<br><span class="dim">스페이스바로 멈춰요. 멈춘 동안 천천히 생각해도 돼요.</span></div><div style="text-align:right"><button class="btn" id="briefGo">시작하기</button></div>';
+  $('#brief').classList.add('show');$$('#advs .pill').forEach(function(b){b.onclick=function(){selAdv=selAdv===b.dataset.a?null:b.dataset.a;$$('#advs .pill').forEach(function(x){x.classList.toggle('on',x.dataset.a===selAdv);});};});$('#briefGo').onclick=function(){if(selAdv&&applyAdvisor(st,selAdv))say(st,ADVISORS[selAdv].ko+' 선임: '+ADVISORS[selAdv].d);$('#brief').classList.remove('show');build();var seen=false;try{seen=localStorage.getItem('neuroinc.tut')==='1';}catch(e){}if(!seen)coach(0);};
 }
 // ---------- 튜토리얼 ----------
 var STEPS=[
@@ -912,7 +934,7 @@ function showEnd(){
   var bad=st.log.filter(function(l){return!l.good;}),goods=st.log.filter(function(l){return l.good;}).length;
   var tl=bad.slice(0,8).map(function(l){return '<div class="tl b"><b>'+(l.kind==='chem'?'합성 조건 · ':'사건 · ')+clean(l.kind==='chem'?l.title.split(' ')[0]:l.title)+'</b>, 내 선택: '+l.pick+(l.best?' / 정답: '+l.best:'')+'<br><span class="dim">'+clean(l.why)+'</span></div>';}).join('');
   
-  var tip=o.win?'':'<div class="rule"><b>다음엔?</b> '+(st.profile==='advanced'?'이 환자들은 타우가 이미 퍼져 있어요, 항타우 약을 일찍 준비하세요.':st.profile==='apoe4'?'이 환자들은 부작용에 약해요, 유전자 검사와 낮은 투여량이 핵심이에요.':'이 환자들은 반응이 좋아요, 찌꺼기를 강하게 지우되 MRI는 꼭 두세요.')+'</div>';
+  var nk=o.win?advUnlock():null;var tip=o.win?(nk?'<div class="rule"><b>'+ADVISORS[nk].ko+'</b>이 합류했어요. 다음 판 시작할 때 선임할 수 있어요 ('+ADVISORS[nk].d+').</div>':''):'<div class="rule"><b>다음엔?</b> '+(st.profile==='advanced'?'이 환자들은 타우가 이미 퍼져 있어요, 항타우 약을 일찍 준비하세요.':st.profile==='apoe4'?'이 환자들은 부작용에 약해요, 유전자 검사와 낮은 투여량이 핵심이에요.':'이 환자들은 반응이 좋아요, 찌꺼기를 강하게 지우되 MRI는 꼭 두세요.')+'</div>';
   $('#endBox').innerHTML='<div style="display:flex;align-items:center;gap:18px"><div class="rp" style="width:96px;height:96px;border-color:'+(o.win?'var(--green)':'var(--red)')+'"><b style="font-size:38px;color:'+(o.win?'var(--green)':'var(--red)')+'">'+(o.win?o.grade:'×')+'</b></div><div><h2 style="margin:0">'+(o.win?'승리':'패배')+'</h2><div>'+o.why+'</div></div></div>'+
    '<p>환자 유형 <b>'+PROFILES[st.profile].ko+'</b> · 난이도 '+DIFF[st.diff].ko+' · 인지 '+o.cognition.toFixed(0)+'% · 신뢰도 '+Math.max(0,o.trust).toFixed(0)+' · 아밀로이드 '+o.amy.toFixed(0)+(st.rivalWon?' · <span class="bad">경쟁사 먼저 승인(최고 B)</span>':'')+'</p>'+
    '<p class="dim">마지막 시험 보고서: '+trialReport(st).ko+'. '+trialReport(st).tip+'</p><p class="dim">'+achievements(st).map(function(a){return '<span class="'+(a.ok?'g':'dim')+'">'+(a.ok?'달성 ':'미달성 ')+a.ko+'</span>';}).join(' · ')+'</p>'+
