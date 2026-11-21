@@ -14,7 +14,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
 b,.b{font-weight:800}
 #stage{position:absolute;left:0;top:0;width:1440px;height:900px;transform-origin:0 0;overflow:hidden;background:var(--sea)}
 #game{position:absolute;inset:0}
-#brain{position:absolute;left:150px;right:150px;top:56px;bottom:46px;width:auto;height:auto}
+#brain{position:absolute;left:210px;right:350px;top:150px;bottom:150px;width:auto;height:auto}
 /* HUD */
 #hudL{position:absolute;left:12px;top:6px;z-index:5}
 .rp{width:76px;height:76px;border-radius:50%;background:var(--green);border:5px solid #b9ffd5;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
@@ -25,7 +25,7 @@ b,.b{font-weight:800}
 .gz .l{display:contents}
 .gz .l b{order:2;color:inherit;font-size:15px}
 .gz .bar{order:1;flex:none;width:84px;height:14px;background:#24364d;border-radius:8px;overflow:hidden}.gz .bar i{display:block;height:100%;transition:width .25s}
-#hudR{position:absolute;right:16px;top:70px;width:300px;z-index:3;background:var(--panel);border:3px solid var(--line);border-radius:18px;padding:12px 14px;max-height:640px;overflow:auto}
+#hudR{position:absolute;right:20px;top:76px;width:300px;z-index:3;background:var(--panel);border:3px solid var(--line);border-radius:18px;padding:12px 14px;max-height:560px;overflow:auto}
 #hudR h4{margin:0 0 6px;font-size:13px;color:var(--green);display:flex;justify-content:space-between;align-items:center}
 .st{margin:7px 0}.st .l{display:flex;justify-content:space-between;font-size:12.5px}.st .l span{color:var(--dim)}.st .bar{height:7px;background:#0a1220;border-radius:4px;margin-top:3px;overflow:hidden}.st .bar i{display:block;height:100%;background:var(--blue);transition:width .25s}
 .st small{display:block;color:var(--dim);font-size:11px;font-weight:600}
@@ -54,7 +54,7 @@ details{margin-top:8px;font-size:12px;color:var(--dim)}summary{cursor:pointer}
 .evolve{width:104px;height:104px;border-radius:50%;background:var(--green);border:7px solid #b9ffd5;color:#05301a;font-weight:900;font-size:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
 .evolve small{font-size:11px;font-weight:800}
 .evolve.pulse{animation:pl 1.6s infinite}@keyframes pl{50%{box-shadow:0 0 0 12px #3fe08a33}}
-#goal{position:absolute;left:420px;top:66px;width:600px;z-index:3;background:var(--panel);border:3px solid var(--green);border-radius:14px;padding:7px 14px;font-size:13.5px;text-align:center;line-height:1.45}
+#goal{position:absolute;left:380px;top:72px;width:560px;line-height:1.5;z-index:3;background:var(--panel);border:3px solid var(--green);border-radius:14px;padding:7px 14px;font-size:13.5px;text-align:center;line-height:1.45}
 #goal b{color:var(--green)}#goal .w{color:#ff8f8f;font-weight:800}
 #danger{position:absolute;inset:0;pointer-events:none;z-index:2;box-shadow:inset 0 0 0 0 #e0242b;transition:box-shadow .5s}#danger.on{animation:dg 1.2s infinite}@keyframes dg{50%{box-shadow:inset 0 0 90px 10px #e0242b66}}
 
@@ -127,7 +127,7 @@ details{margin-top:8px;font-size:12px;color:var(--dim)}summary{cursor:pointer}
 #desc{flex:1;min-width:260px;font-size:13px}#desc h3{margin:0 0 4px;font-size:18px}
 #desc .g{color:var(--green)}#desc .r{color:var(--amber)}
 #evoGo{align-self:center}
-.legend{position:absolute;left:20px;top:420px;font-size:11px;color:var(--dim);z-index:2;max-width:180px;pointer-events:none}
+.legend{display:none;position:absolute;left:20px;top:420px;font-size:11px;color:var(--dim);z-index:2;max-width:180px;pointer-events:none}
 #banner{position:absolute;left:50%;top:96px;transform:translateX(-50%);background:var(--green);color:#05301a;padding:6px 18px;border-radius:20px;font-weight:900;display:none;z-index:6}
 .bub{cursor:pointer}
 .hl{outline:4px solid #fff;outline-offset:3px;position:relative;z-index:9;border-radius:14px}
@@ -818,7 +818,7 @@ function paint(){
   if(!$("#vCog"))return;
   var d=st.drug,dv=derive(st),am=amyAvg(st);
   var rv=st.rp.toFixed(0);if($('#rp').textContent!==rv){$('#rp').textContent=rv;var rb=$('#rp');rb.classList.remove('pop');void rb.offsetWidth;rb.classList.add('pop');}
-  $('#date').innerHTML='<b>'+(st.week/4.33).toFixed(1)+'개월</b> / 36개월 · '+PROFILES[st.profile].ko;
+  $('#date').innerHTML='<b>'+(st.week/4.33).toFixed(1)+'개월</b> / 36개월';
   $('#vCog').textContent=Math.max(0,st.cognition).toFixed(0)+'%';$('#bCog').style.width=Math.max(0,st.cognition)+'%';
   $('#vTr').textContent=Math.max(0,st.trust).toFixed(0);$('#bTr').style.width=Math.max(0,Math.min(100,st.trust))+'%';
   $('#vAmy').textContent=am.toFixed(0)+' (목표 <20)';$('#bAmy').style.width=am+'%';
