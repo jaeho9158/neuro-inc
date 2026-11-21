@@ -48,6 +48,8 @@ details{margin-top:8px;font-size:12px;color:var(--dim)}summary{cursor:pointer}
 #cats{display:flex;align-items:flex-end;gap:12px}
 .rbtn{width:64px;height:64px;border-radius:50%;border:5px solid var(--green);background:#0f1d2e;color:var(--green);font-weight:900;font-size:24px;display:flex;align-items:center;justify-content:center;flex-direction:column;line-height:1;position:relative}
 .rbtn small{font-size:10px;font-weight:700;margin-top:2px}
+.tbtn{width:64px;height:64px;border-radius:50%;border:5px solid var(--amber);background:#0f1d2e;color:var(--amber);font-weight:900;font-size:13px;line-height:1.1;cursor:pointer;font-family:inherit}.tbtn:hover{background:#2a2112}.tbtn[disabled]{opacity:.45}
+.tr-pass{color:var(--green)}.tr-fail{color:#ff8f8f}.tr-row{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:2px solid var(--line2)}
 .rbtn:hover{background:#15304a}
 .rbtn.sm{width:44px;height:44px;border-width:4px;font-size:16px}
 .rbtn.on{background:var(--green);color:#05301a}
@@ -168,6 +170,7 @@ details{margin-top:8px;font-size:12px;color:var(--dim)}summary{cursor:pointer}
       <button class="rbtn" data-t="A"></button>
       <button class="rbtn" data-t="B"></button>
       <button class="rbtn" data-t="C"></button>
+      <button class="tbtn" id="bTrial" title="지금 약으로 임상 시험을 해요. 지난 시험보다 나아졌다면 통과해서 보상을 받아요">임상<br>시험</button>
     </div>
     <div id="pipe"></div>
     <div id="speed"><button class="rbtn sm" id="bHelp" title="도움말">?</button><button class="rbtn sm" id="bPause">II</button><button class="rbtn sm" data-sp="1">1x</button><button class="rbtn sm" data-sp="2">2x</button></div>
@@ -448,7 +451,7 @@ function newState(company,seed,diff,profile,scn){
     earlyUsed:false,over:null,rand:rand,drug:computeDrug(company,[],[]),
     profile:profile,diff:diff,event:null,fired:{},eventT:10+rand()*8,log:[],ariaCount:0,
     ariaPerm:1,tauPerm:1,rpPerm:1,ariaBuff:{mul:1,until:0},rival:0,rivalRate:100/DIFF[diff].rival*(.9+.2*rand()),rivalWon:false,scn:SCN[scn]?scn:'std',ph:0};
-  var S=SCN[st.scn];st.rpPerm*=S.rp;st.ariaPerm*=S.aria;st.rivalRate*=S.rival;st.costMul=S.cost;st.ph=phaseOf(st);
+  var S=SCN[st.scn];st.rpPerm*=S.rp;st.ariaPerm*=S.aria;st.rivalRate*=S.rival;st.costMul=S.cost;st.ph=phaseOf(st);st.lastScore=trialEval(st).score;
   return st;
 }
 function trialReport(st){var d=st.drug,dv=derive(st);
@@ -456,6 +459,19 @@ function trialReport(st){var d=st.drug,dv=derive(st);
   var s=[['up',Math.log10(d.uptake*10+1)/3,'뇌 장벽 통과율이 낮아요','침투 계열(A)을 개발하거나 작용기를 바꿔 보세요.'],['th',dv.theta,'표적에 붙는 힘이 약해요','표적 계열(B)을 개발하거나 수산기·아민기 작용기를 붙여 보세요.'],['cl',dv.clear/.1,'찌꺼기 제거가 느려요','투여량을 올리거나 머무름을 늘려 보세요.']].sort(function(a,b){return a[1]-b[1];});
   if(s[0][1]>=.6)return {key:'ok',ko:'약 성능이 균형 잡혔어요',tip:'투여량과 사건에 대비하세요.'};
   return {key:s[0][0],ko:s[0][2],tip:s[0][3]};}
+K.TRIAL_RP=10;K.TRIAL_CD=10;K.TRIAL_NEED=.25;K.TRIAL_OK=.6;
+function trialEval(st){var d=st.drug,dv=derive(st),sc=Math.min(Math.log10(d.uptake*10+1)/3,dv.theta,dv.clear/.1);if(dv.aria>.03)sc*=.5;return {rep:trialReport(st),score:sc};}
+function trialCost(st){return Math.round(K.TRIAL_RP*(1+.5*(st.trials||0)));}
+function runTrial(st){
+  if(st.week<(st.trialNext||0))return {ok:false,msg:'다음 시험까지 '+Math.ceil(st.trialNext-st.week)+'주 남았어요'};
+  var c=trialCost(st);if(st.rp<c)return {ok:false,msg:'연구점수가 모자라요 (시험 '+c+')'};
+  st.rp-=c;st.trials=(st.trials||0)+1;st.trialNext=st.week+K.TRIAL_CD;
+  var ev=trialEval(st),gain=(ev.score-(st.lastScore||0))/Math.max(.001,st.lastScore||0),pass=ev.score>=K.TRIAL_OK||gain>=K.TRIAL_NEED;
+  var rep={pass:pass,num:st.trials,cost:c,score:ev.score,gain:gain,key:ev.rep.key,ko:ev.rep.ko,tip:ev.rep.tip,reward:0};
+  if(pass){st.trust=Math.min(100,st.trust+8);rep.reward=c*2;st.rp+=rep.reward;}else st.rp+=4;
+  st.lastScore=Math.max(st.lastScore||0,ev.score);st.lastTrial=rep;
+  say(st,'임상 시험 '+rep.num+'차 '+(pass?'통과. 신뢰도 +8, 연구점수 +'+rep.reward:'미통과. '+rep.ko));
+  return {ok:true,rep:rep};}
 function say(st,t){st.news.unshift(t);if(st.news.length>30)st.news.pop();}
 // 같은 선택의 정답은 상황(ΔH, 약물 종류, 장비 포화)에 따라 바뀐다
 function isProtein(st,n){return st.drug.type==='ab'&&n.tree==='B';}
@@ -793,6 +809,17 @@ function renderLab(){
 function openLab(){if(!st)return;labEl.classList.add('show');renderLab();}
 document.addEventListener('click',function(e){if(e.target&&e.target.id==='bLab')openLab();});
 function burst(el){try{var r=el.getBoundingClientRect(),n=10;for(var i=0;i<n;i++){var p=document.createElement('i');p.className='spk';var a=i/n*6.283,d=30+Math.random()*30;p.style.left=(r.left+r.width/2)+'px';p.style.top=(r.top+r.height/2)+'px';p.style.setProperty('--dx',Math.cos(a)*d+'px');p.style.setProperty('--dy',Math.sin(a)*d+'px');document.body.appendChild(p);setTimeout((function(q){return function(){if(q.parentNode)q.parentNode.removeChild(q);};})(p),700);}}catch(e){}}
+// ---------- 임상 시험 ----------
+var trEl=document.createElement('div');trEl.className='ov';trEl.id='trOv';trEl.innerHTML='<div class="card"><div class="in" id="trBox"></div></div>';document.body.appendChild(trEl);
+function showTrial(rep){var d=st.drug,dv=derive(st);
+  function row(n,v,lv){return '<div class="tr-row"><span>'+n+'</span><b class="'+['v-b','v-w','v-g'][lv]+'">'+v+' · '+['부족','보통','좋음'][lv]+'</b></div>';}
+  var up=Math.log10(d.uptake*10+1)/3*100,th=dv.theta*100,cl=dv.clear/.1*100,L=function(p){return p>=40?2:p>=15?1:0;};
+  $('#trBox').innerHTML='<h2 style="margin-top:0">임상 시험 '+rep.num+'차 결과 <span class="'+(rep.pass?'tr-pass':'tr-fail')+'">'+(rep.pass?'통과':'미통과')+'</span></h2>'+
+   row('뇌 장벽 통과율',d.uptake.toFixed(2)+'%',L(up))+row('표적에 붙는 정도',(dv.theta*100).toFixed(0)+'%',L(th))+row('찌꺼기 제거 속도',(dv.clear*100).toFixed(2)+'%/주',L(cl))+row('부작용 위험(월)',(dv.aria*100).toFixed(1)+'%',dv.aria>.03?0:dv.aria>.015?1:2)+
+   '<div class="rule">'+(rep.pass?'<b>지난 시험보다 나아졌어요</b> (종합 점수 '+(rep.gain>=0?'+':'')+(rep.gain*100).toFixed(0)+'%). 신뢰도 +8, 연구점수 +'+rep.reward+'.':'<b>이유</b> '+(rep.gain<K.TRIAL_NEED?'지난 시험보다 나아진 게 없어요. ':'')+'가장 약한 곳: '+rep.ko+'.')+'<br><b>다음 설계</b> '+rep.tip+'</div>'+
+   '<p class="dim">다음 시험은 '+K.TRIAL_CD+'주 뒤, 비용 '+trialCost(st)+'입니다. 약을 바꾸고 다시 도전하세요.</p><div style="text-align:right"><button class="btn" id="trX">닫기</button></div>';
+  trEl.classList.add('show');$('#trX').onclick=function(){trEl.classList.remove('show');};}
+document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#bTrial')&&st){var r=runTrial(st);if(!r.ok)say(st,r.msg);else{beep(r.rep.pass?740:300,.2);showTrial(r.rep);}}});
 // ---------- 이벤트 ----------
 function showEvent(){
   var ev=EVENTS.filter(function(e){return e.id===st.event.id;})[0];resumeAfter=!st.paused;st.paused=true;evOpen=true;beep(300,.3,'square');
@@ -848,6 +875,7 @@ function paint(){
   setS('ts','×'+(dv.tauSpread/K.SPREAD_RATE).toFixed(2),dv.tauSpread/K.SPREAD_RATE*50,dv.tauSpread,false);
   setS('ar',(dv.aria*100).toFixed(1)+'%',dv.aria*100*4,dv.aria,false);
   var tr=trialReport(st),th2='<b>시험 보고서</b> '+tr.ko+'<br><span class="dim">'+tr.tip+'</span>';if($('#trial').dataset.h!==th2){$('#trial').dataset.h=th2;$('#trial').innerHTML=th2;}
+  var tb=$('#bTrial');if(tb){var cd=Math.ceil((st.trialNext||0)-st.week);tb.innerHTML=cd>0?'시험<br>'+cd+'주':'임상<br>시험 '+trialCost(st);}
   $('#doseV').textContent=st.dose.toFixed(1);$('#dose').value=st.dose;
   $('#raw').innerHTML='분자량 '+(d.MW>1e4?(d.MW/1000).toFixed(0)+' kDa':d.MW.toFixed(0)+' Da')+(d.type==='ab'?' (항체)':' (소분자)')+' · Kd '+d.Kd.toFixed(2)+' · BBB점수 '+d.bbbScore.toFixed(2)+(d.type==='ab'?'':' · logP '+d.logP.toFixed(1)+' · HBD '+d.HBD+' · TPSA '+d.TPSA.toFixed(0));
   st.regions.forEach(function(r){var e=regEl[r.id],hot=r.tau>K.TAU_THRESHOLD;e.c.setAttribute('fill-opacity',(r.tau/100*.85).toFixed(2));
