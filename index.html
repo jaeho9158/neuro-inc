@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NEURO INC. — 알츠하이머 치료제 개발</title>
+<title>NEURO INC. 알츠하이머 치료제 개발</title>
 <style>
 :root{--sea:#0a1220;--land:#1c2a3a;--panel:#111c2c;--panel2:#182740;--line:#2b3d55;--line2:#34496a;--green:#3fe08a;--red:#e0242b;--blue:#3da5ff;--amber:#ffb454;--txt:#eef4fb;--dim:#8da2ba}
 *{box-sizing:border-box}
@@ -163,6 +163,7 @@ details{margin-top:8px;font-size:12px;color:var(--dim)}summary{cursor:pointer}
   <p style="font-size:16px;margin:10px 0 4px">알츠하이머 신약 개발팀장이 되어 환자의 뇌를 지키는 게임입니다. 뇌 속에서 타우라는 나쁜 단백질이 조금씩 퍼지고 있습니다. 더 나은 약을 만들어 퍼지는 속도를 늦추세요. 모르는 용어는 게임 중에 하나씩 설명해 드립니다.</p>
   <div class="rule"><b>이기려면</b> 3년(게임 속 156초) 동안 환자 기억력 50% 이상을 지키고 아밀로이드를 20 아래로 낮추세요.<br><b>지는 경우</b> 타우가 감각운동피질에 닿거나, 신뢰도가 0이 되거나, 기억력이 25% 아래로 떨어질 때입니다.<br><b>조작</b> 마우스로 누르고, 스페이스바로 멈춥니다. 멈춘 동안 천천히 생각해도 됩니다.</div>
   <b>난이도</b><div class="pills" id="diffs"></div>
+  <b>시나리오</b><div class="pills" id="scns"></div>
   <b>제약사</b> <span class="dim" style="font-weight:600">(처음이면 맨 위)</span><div id="cos"></div>
   <p class="dim" style="font-size:12px;margin:8px 0 0">수치는 교육용으로 단순화한 값이며 실제 치료 판단의 근거가 아닙니다. 연구 항목의 실제 사례는 2026.11 학회 자료 기준(일부 중간 결과·추정치 포함).</p>
 </div></div></div>
@@ -247,6 +248,10 @@ var PROFILES={
  apoe4:{ko:'APOE4 고위험 코호트',brief:'아밀로이드 부담이 크고 ARIA에 매우 취약한 환자들. 유전형 선별·MRI·점진 증량이 핵심이고, 강한 제거 전략은 위험하다.',risk:3.2,clear:1,spread:1,amy:70,tau:{}},
  advanced:{ko:'진행 단계 코호트',brief:'타우가 이미 변연계·측두엽까지 퍼졌고 제거 반응이 약한 환자들. 아밀로이드만으로는 부족하다, 항타우와 시간 싸움.',risk:1.2,clear:.9,spread:1.15,amy:45,tau:{ento:65,hippo:50,amyg:28,itc:10}}
 };
+var SCN={std:{ko:'표준',d:'특별한 조건이 없어요',rp:1,aria:1,rival:1,cost:1},fast:{ko:'패스트 트랙',d:'개발 비용 30% 할인, 대신 안전성 심사가 까다로워 부작용 위험 20% 증가',rp:1,aria:1.2,rival:1,cost:.7},tight:{ko:'자금난',d:'연구점수 수급 25% 감소, 대신 경쟁사도 느려져요',rp:.75,aria:1,rival:.8,cost:1}};
+var PHASES=['평시','확산 시작','광범위 확산','위기'];
+function phaseOf(st){var n=st.regions.filter(function(r){return r.tau>=20;}).length;return n>=5?3:n>=3?2:n>=1?1:0;}
+function achievements(st){var o=st.over||{};return [{ko:'부작용 없이 완주',ok:!!o.win&&st.ariaCount===0},{ko:'경쟁사 승인 전에 완주',ok:!!o.win&&!st.rivalWon},{ko:'작용기 3개 장착',ok:st.groups.length>=K.MAX_GROUPS},{ko:'연구점수 100 이상 남김',ok:!!o.win&&st.rp>=100}];}
 var DIFF={easy:{ko:'쉬움',aria:.8,spread:.8,rival:190},normal:{ko:'보통',aria:1,spread:1,rival:135},hard:{ko:'어려움',aria:1.25,spread:1.2,rival:105}};
 function amyAvg(st){return st.regions.reduce(function(s,r){return s+r.amy;},0)/8;}
 function rawApoe4(st){return st.profile==='apoe4'&&!st.drug.flags.apoe;}
@@ -402,9 +407,9 @@ function derive(st){
 function nodeCost(st,id){
   var n=NODE[id],c=Object.assign({},n.cost),co=COMPANIES[st.company],f=1;
   if(co.discount&&((co.discount.tree&&co.discount.tree===n.tree)||co.discount.id===id)) f=co.discount.f;
-  var same=st.owned.filter(function(o){return NODE[o].tree===n.tree;}).length;c={rp:Math.round(c.rp*f*(1+.05*same)*10)/10}; return c; // CHON은 합성 실험실 전용
+  var same=st.owned.filter(function(o){return NODE[o].tree===n.tree;}).length;c={rp:Math.round(c.rp*f*(1+.05*same)*(st.costMul||1)*10)/10}; return c; // CHON은 합성 실험실 전용
 }
-function newState(company,seed,diff,profile){
+function newState(company,seed,diff,profile,scn){
   var rand=rng(seed||1); diff=DIFF[diff]?diff:'normal';
   if(!PROFILES[profile]) profile=['early','apoe4','advanced'][Math.floor(rand()*3)];
   var P=PROFILES[profile];
@@ -413,7 +418,8 @@ function newState(company,seed,diff,profile){
     cognition:100,trust:100,company:company,pendingAria:[],news:[],bubbles:[],bubbleT:8,nextId:1,
     earlyUsed:false,over:null,rand:rand,drug:computeDrug(company,[],[]),
     profile:profile,diff:diff,event:null,fired:{},eventT:10+rand()*8,log:[],ariaCount:0,
-    ariaPerm:1,tauPerm:1,rpPerm:1,ariaBuff:{mul:1,until:0},rival:0,rivalRate:100/DIFF[diff].rival*(.9+.2*rand()),rivalWon:false};
+    ariaPerm:1,tauPerm:1,rpPerm:1,ariaBuff:{mul:1,until:0},rival:0,rivalRate:100/DIFF[diff].rival*(.9+.2*rand()),rivalWon:false,scn:SCN[scn]?scn:'std',ph:0};
+  var S=SCN[st.scn];st.rpPerm*=S.rp;st.ariaPerm*=S.aria;st.rivalRate*=S.rival;st.costMul=S.cost;st.ph=phaseOf(st);
   return st;
 }
 function say(st,t){st.news.unshift(t);if(st.news.length>30)st.news.pop();}
@@ -496,7 +502,7 @@ function resolveEvent(st,i){
   var t=ev.act(st,i);
   st.log.push({week:st.week,kind:'event',title:ev.title,pick:ev.ch[i].l,best:ev.ch[b].l,good:i===b,why:i===b?'':why});
   if(i===b){st.rp+=10;t+=' (적절한 판단, 연구점수 +10)';}
-  say(st,(i===b?'✔ ':'✖ ')+ev.title+', '+t); st.event=null;
+  say(st,ev.title+', '+t); st.event=null;
 }
 function step(st,dt){
   if(st.over||st.event) return;
@@ -512,7 +518,8 @@ function step(st,dt){
   st.regions.forEach(function(ri){if(ri.tau>K.TAU_THRESHOLD)ri.to.forEach(function(t){var j=st.regions.findIndex(function(x){return x.id===t;});dt0[j]+=dv.tauSpread*ri.tau*(.35+.65*st.regions[j].amy/100);});});
   st.rival=Math.min(100,st.rival+st.rivalRate*dt);
   st.rn=st.rn||{};[25,50,75,95].forEach(function(t){if(st.rival>=t&&!st.rn[t]){st.rn[t]=1;say(st,'경쟁사 약물 임상 '+t+'% 진행'+(t>=95?', 곧 허가를 신청합니다':''));}});
-  if(st.rival>=100&&!st.rivalWon){st.rivalWon=true;say(st,'⚠ 경쟁사 약물이 먼저 승인됐습니다, 최고 등급 B로 제한, 연구 수익 −15%');}
+  if(st.rival>=100&&!st.rivalWon){st.rivalWon=true;say(st,'경쟁사 약물이 먼저 승인됐어요. 최고 등급은 B, 연구점수 수급은 15% 줄어요.');}
+  var ph=phaseOf(st);if(ph>st.ph){st.ph=ph;say(st,['','타우가 퍼지기 시작했어요. 20을 넘은 영역이 생겼어요.','타우가 여러 영역으로 퍼졌어요. 항타우 약을 서두르세요.','위기예요. 타우가 5곳 이상으로 퍼졌어요.'][ph]);}
   st.eventT-=dt;
   if(st.eventT<=0){var el=EVENTS.filter(function(e){return !st.fired[e.id]&&st.week>=e.min&&st.week<=e.max&&e.ok(st);});
     if(el.length){var e=el[Math.floor(st.rand()*el.length)];st.fired[e.id]=1;st.event={id:e.id,best:e.best(st)};st.eventT=K.EVENT_GAP[0]+st.rand()*(K.EVENT_GAP[1]-K.EVENT_GAP[0]);}else st.eventT=4;}
@@ -618,9 +625,10 @@ function reqText(n){var t=[];n.req.forEach(function(r){t.push(r+' '+EASY[r][0]);
 // ---------- 시작 ----------
 var DL={easy:['쉬움','부작용·타우가 느리고 경쟁사가 늦어요'],normal:['보통','기본 난이도'],hard:['어려움','부작용·타우가 빠르고 경쟁사가 일찍 승인받아요']};
 Object.keys(DIFF).forEach(function(k){var b=document.createElement('button');b.className='pill'+(k===diff?' on':'');b.textContent=DL[k][0];b.title=DL[k][1];b.dataset.d=k;b.onclick=function(){diff=k;$$('#diffs .pill').forEach(function(x){x.classList.toggle('on',x.dataset.d===k);});};$('#diffs').appendChild(b);});
+var scn='std';Object.keys(SCN).forEach(function(k){var b=document.createElement('button');b.className='pill'+(k===scn?' on':'');b.textContent=SCN[k].ko;b.title=SCN[k].d;b.dataset.s=k;b.onclick=function(){scn=k;$$('#scns .pill').forEach(function(x){x.classList.toggle('on',x.dataset.s===k);});};$('#scns').appendChild(b);});
 Object.keys(COMPANIES).forEach(function(k){var c=COCO[k],b=document.createElement('button');b.className='co';b.innerHTML='<span class="ic">'+c[0]+'</span><span><b>'+c[1]+'</b><small>'+c[2]+'</small></span>';b.onclick=function(){start(k);};$('#cos').appendChild(b);});
 function start(c){
-  st=newState(c,Date.now()&0xffff,diff);st.paused=true;$('#start').classList.remove('show');
+  st=newState(c,Date.now()&0xffff,diff,undefined,scn);st.paused=true;$('#start').classList.remove('show');
   var P=PROFILES[st.profile],r=REC[st.profile][0];
   $('#briefBox').innerHTML='<div class="logo" style="font-size:26px">이번 임상 환자들</div><h2 style="margin-top:12px" class="warn">'+P.ko+'</h2><p>'+P.brief+'</p>'+
    '<div class="rule"><b>환자 유형이 정답을 바꿔요.</b> 같은 선택이라도 환자에 따라 도움이 되기도, 독이 되기도 해요. 가끔 터지는 <b>뉴스 사건</b>에서도 마찬가지예요.<br>처음 할 일: <b>'+EASY[r[0]][0]+'</b>, '+r[1]+'</div>'+
@@ -784,6 +792,7 @@ function build(){
 }
 function setS(k,txt,pct,val,goodUp){var e=$('#s_'+k);e.querySelector('b').textContent=txt;e.querySelector('i').style.width=Math.max(2,Math.min(100,pct))+'%';var p=prev[k];prev[k]=val;if(p!==undefined&&Math.abs(p-val)>1e-9){var up=val>p;e.classList.remove('fu','fd');void e.offsetWidth;e.classList.add(up===goodUp?'fu':'fd');}}
 function paint(){
+  if(!$("#vCog"))return;
   var d=st.drug,dv=derive(st),am=amyAvg(st);
   var rv=st.rp.toFixed(0);if($('#rp').textContent!==rv){$('#rp').textContent=rv;var rb=$('#rp');rb.classList.remove('pop');void rb.offsetWidth;rb.classList.add('pop');}
   $('#date').innerHTML='<b>'+(st.week/4.33).toFixed(1)+'개월</b> / 36개월 · '+PROFILES[st.profile].ko;
@@ -814,7 +823,7 @@ function paint(){
   else if(nx0){var c2=nodeCost(st,nx0[0]).rp;gt=st.rp>=c2?'<b>지금 할 일</b> 연구점수 '+st.rp.toFixed(0)+'로 「'+EASY[nx0[0]][0]+'」을 개발하세요 (필요 '+c2+').':'<b>지금 할 일</b> 연구점수를 모으는 중이에요. 「'+EASY[nx0[0]][0]+'」까지 '+Math.ceil(c2-st.rp)+'점 남았어요.';}
   else gt='<b>지금 할 일</b> 투여량을 조절하고 이벤트에 대비하세요.';
   if(run)gt+=' <span class="dim">합성 중: '+EASY[run.nodeId][0]+' (약 '+Math.ceil(Math.max(0,run.total-run.progress)/st.speed)+'초)</span>';
-  gt+='<br>'+(sm.tau>=25?'<span class="w">감각운동 타우 '+sm.tau.toFixed(0)+'/50</span>':'감각운동 타우 '+sm.tau.toFixed(0)+'/50')+' 가 50이 되면 패배 · 경쟁사 승인 '+st.rival.toFixed(0)+'%';
+  gt+='<br><span class="dim">상황: '+PHASES[phaseOf(st)]+'</span> · '+(sm.tau>=25?'<span class="w">감각운동 타우 '+sm.tau.toFixed(0)+'/50</span>':'감각운동 타우 '+sm.tau.toFixed(0)+'/50')+' 가 50이 되면 패배 · 경쟁사 승인 '+st.rival.toFixed(0)+'%';
   g.innerHTML=gt;
   var nx=nx0,h=$('#hint');
   if(nx&&!h.dataset.off){$('#hintT').innerHTML='<b>추천</b> '+ico(nx[0],16)+' '+EASY[nx[0]][0]+'<br><span class="dim">'+nx[1]+'</span>';h.style.display='block';}else h.style.display='none';
@@ -836,6 +845,7 @@ function showEnd(){
   var tip=o.win?'':'<div class="rule"><b>다음엔?</b> '+(st.profile==='advanced'?'이 환자들은 타우가 이미 퍼져 있어요, 항타우 약을 일찍 준비하세요.':st.profile==='apoe4'?'이 환자들은 부작용에 약해요, 유전자 검사와 낮은 투여량이 핵심이에요.':'이 환자들은 반응이 좋아요, 찌꺼기를 강하게 지우되 MRI는 꼭 두세요.')+'</div>';
   $('#endBox').innerHTML='<div style="display:flex;align-items:center;gap:18px"><div class="rp" style="width:96px;height:96px;border-color:'+(o.win?'var(--green)':'var(--red)')+'"><b style="font-size:38px;color:'+(o.win?'var(--green)':'var(--red)')+'">'+(o.win?o.grade:'×')+'</b></div><div><h2 style="margin:0">'+(o.win?'승리':'패배')+'</h2><div>'+o.why+'</div></div></div>'+
    '<p>환자 유형 <b>'+PROFILES[st.profile].ko+'</b> · 난이도 '+DIFF[st.diff].ko+' · 인지 '+o.cognition.toFixed(0)+'% · 신뢰도 '+Math.max(0,o.trust).toFixed(0)+' · 아밀로이드 '+o.amy.toFixed(0)+(st.rivalWon?' · <span class="bad">경쟁사 먼저 승인(최고 B)</span>':'')+'</p>'+
+   '<p class="dim">'+achievements(st).map(function(a){return '<span class="'+(a.ok?'g':'dim')+'">'+(a.ok?'달성 ':'미달성 ')+a.ko+'</span>';}).join(' · ')+'</p>'+
    '<p class="dim">내 선택 중 좋은 판단 '+goods+'개 / 아쉬운 판단 '+bad.length+'개 · 최고 기록 '+nb.grade+' (인지 '+nb.cog+'%)</p>'+tip+(tl?'<b>다시 보기, 상황에 맞는 선택은?</b>'+tl:'<div class="rule">모든 선택이 상황에 딱 맞았어요!</div>')+
    '<p class="dim" style="font-size:12px">모든 수치는 교육용 단순화값입니다. 사건 카드는 실제 사례에서 영감을 받은 가상 시나리오입니다.</p><div style="text-align:right"><button class="btn" onclick="location.reload()">다시 하기</button></div>';
   $('#end').classList.add('show');beep(o.win?880:150,.5);
