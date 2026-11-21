@@ -110,6 +110,7 @@ details{margin-top:8px;font-size:12px;color:var(--dim)}summary{cursor:pointer}
 .st small{display:none}
 .v-g{color:var(--green)}.v-w{color:var(--amber)}.v-b{color:#ff8f8f}
 #trial{margin-top:8px;padding:8px 10px;border:3px solid var(--line2);border-radius:12px;font-size:12.5px;line-height:1.45}#trial b{color:var(--green)}
+#labOv .card{max-width:1000px}.labgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.labgrid .rule{margin:0}
 .pv{margin:4px 0;font-size:12.5px}.pv .u{color:var(--green)}.pv .d{color:#ff8f8f}
 .dim{color:var(--dim)}.good{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}
 .logo{font-size:44px;font-weight:900;letter-spacing:.02em;line-height:1}.logo i{font-style:normal;color:var(--red)}
@@ -779,11 +780,12 @@ function groupPreview(id){if(!GROUPS[id]||st.groups.indexOf(id)>=0||st.groups.le
 function renderLab(){
   var h='<h2 style="margin-top:0">합성 실험실</h2><p class="dim" style="margin-top:0">원료(탄소·수소·산소·질소)로 화합물을 만들어요. 만든 화합물은 <b>합성할 때 재료</b>로 쓰거나, <b>약에 작용기로 붙여</b> 성능을 바꿀 수 있어요. 작용기는 '+K.MAX_GROUPS+'개까지, 한 번 붙이면 떼지 못해요.</p><p class="dim" style="margin:0 0 6px">조합 효과: 수산기+카복실기는 에스터 결합(붙는 힘 증가), 아민기+카복실기는 아마이드 결합(머무름 증가). 처음 합성하는 화합물은 도감에 등록되고 연구점수 '+K.DISC_RP+'를 줘요. 도감 <b>'+Object.keys(st.disc||{}).length+'/'+Object.keys(LAB).length+'</b></p>'+
    '<div class="rule">시약 주문: 연구점수 '+orderCost(st)+'로 원료 '+K.ORDER_ATOMS+'개 (주문할수록 비싸져요) '+['C','H','O','N'].map(function(a){return '<button class="btn gh" data-o="'+a+'" style="padding:3px 10px;font-size:12px">'+ATOM[a]+'</button>';}).join(' ')+'</div><div class="stock">내 원료 '+['C','H','O','N'].map(function(a){return '<span class="sk">'+ATOM[a]+' <b>'+st.atoms[a]+'</b></span>';}).join('')+' <span style="margin-left:auto">붙인 작용기 <b>'+st.groups.length+'/'+K.MAX_GROUPS+'</b></div>';
+  h+='<div class="labgrid">';
   Object.keys(LAB).forEach(function(id){var x=LAB[id],can=true,need=Object.keys(x.atoms).map(function(a){var ok=st.atoms[a]>=x.atoms[a];if(!ok)can=false;return '<span class="chip '+(ok?'ok':'no')+'"><b>'+ATOM[a]+'</b> 필요 '+x.atoms[a]+' · 보유 '+st.atoms[a]+(ok?' · 합성 후 <b>'+(st.atoms[a]-x.atoms[a])+'</b> 남음':' · <b>'+(x.atoms[a]-st.atoms[a])+'개 부족</b>')+'</span>';}).join(' ');
     var att=st.groups.indexOf(id)>=0;
     h+='<div class="rule lab" data-id="'+id+'"><b style="font-size:16px">'+x.ko+'</b> <span class="dim">'+x.f+'</span> <span class="g" style="float:right">보유 '+st.lab[id]+'개</span><div class="dim" style="margin:4px 0">'+x.use+'</div>'+groupPreview(id)+'<div class="dim" style="margin:2px 0">'+((st.disc||{})[id]?'도감: 발견함':'도감: 아직 합성한 적 없음')+'</div><div style="margin:4px 0">필요 원료: '+need+'</div>'+
      '<button class="btn" data-a="mk" '+(can?'':'disabled')+' style="padding:6px 14px">합성하기</button> <button class="btn gh" data-a="at" '+((st.lab[id]<1||att||st.groups.length>=K.MAX_GROUPS)?'disabled':'')+' style="padding:6px 14px">'+(att?'이미 붙임':'약에 붙이기: '+GROUPS[id].ko)+'</button></div>';});
-  h+='<div style="text-align:right;margin-top:8px"><button class="btn" id="labX">닫기</button></div>';
+  h+='</div><div style="text-align:right;margin-top:8px"><button class="btn" id="labX">닫기</button></div>';
   $('#labBox').innerHTML=h;$('#labX').onclick=function(){labEl.classList.remove('show');};
   $$('#labBox [data-o]').forEach(function(b){b.onclick=function(){var res=labOrder(st,b.dataset.o);if(res!==true)say(st,res);else{beep(500,.12);burst(b);}renderLab();};});
   $$('#labBox .lab').forEach(function(d){d.querySelectorAll('button[data-a]').forEach(function(b){b.onclick=function(){var id=d.dataset.id,res=b.dataset.a==='mk'?labCraft(st,id):labAttach(st,id);if(res!==true)say(st,res);else{beep(b.dataset.a==='mk'?740:560,.18);burst(b);}renderLab();};});});
