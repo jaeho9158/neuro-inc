@@ -37,20 +37,24 @@
 
 - `_head.html`: 스타일과 화면 뼈대
 - `_engine.js`: 규칙, 데이터, 문구
+- `_sfx.js`: 효과음 데이터예요. `make-sfx.js` 가 만들어요. 직접 고치지 않아요.
 - `_ui.js`: 화면과 조작
-- `build.js`: 위 세 파일을 합쳐 한 개의 html 파일로 만들어요.
+- `make-sfx.js`: 고른 효과음의 크기를 맞추고 `_sfx.js` 로 묶어요. ffmpeg 이 있어야 해요.
+- `sfx-src/`: 고른 효과음 원본 12개와 라이선스 글
+- `build.js`: `_head.html`, `_engine.js`, `_sfx.js`, `_ui.js` 네 파일을 합쳐 한 개의 html 파일로 만들어요.
 - `balance.test.js`: 밸런스와 규칙 테스트예요.
 - `check-copy.js`: 문구 규칙 검사예요.
 - `og.html`, `og.png`: 공유할 때 보이는 그림(가로 1200, 세로 630)과 그 원본이에요.
-- `neuro-inc.html`: `_head.html`, `_engine.js`, `_ui.js` 를 합친 결과예요. 직접 고치지 않아요.
+- `neuro-inc.html`: `_head.html`, `_engine.js`, `_sfx.js`, `_ui.js` 를 합친 결과예요. 직접 고치지 않아요.
 
 ```
 node build.js          # neuro-inc.html 을 만들어요
 node balance.test.js   # 밸런스와 규칙 테스트, 마지막 줄이 ALL PASS 여야 해요
 node check-copy.js     # 문구 규칙 검사, 마지막 줄이 OK 여야 해요
+node make-sfx.js    # 효과음을 바꿨을 때만: _sfx.js 를 다시 만들어요 (ffmpeg 필요)
 ```
 
-별도 패키지 없이 Node.js만 있으면 돼요.
+별도 패키지 없이 Node.js만 있으면 돼요. 효과음을 다시 만들 때만 ffmpeg 이 필요해요.
 
 ## 배포 방법
 
@@ -59,6 +63,9 @@ node check-copy.js     # 문구 규칙 검사, 마지막 줄이 OK 여야 해요
 ## 출처
 
 - 글꼴: Noto Sans KR (SIL Open Font License 1.1, Google Fonts에서 불러와요)
+- 효과음: Kenney(kenney.nl)의 Interface Sounds와 Music Jingles (Creative Commons Zero). 고른 파일과 크기 목표는 make-sfx.js 에 있어요.
+  - https://kenney.nl/assets/interface-sounds
+  - https://kenney.nl/assets/music-jingles
 - 게임의 틀은 Plague Inc.(Ndemic Creations)를 참고했어요. 이 게임은 그 회사와 관련이 없어요.
 - 실제 사례의 출처:
   - https://www.alz.org/news/2025/fda-action-approving-leqembi-subcutaneous-maintenance-dosing

@@ -12,10 +12,10 @@ function ro(w){return w+(jong(w)===1?'으로':'로');}
 function fm(f){return String(f).replace(/\d+/g,'<sub>$&</sub>');} // 분자식의 숫자는 아래 첨자로 (HTML에만 씀)
 try{muted=localStorage.getItem('neuroinc.mute')==='1';}catch(e){}
 var ATOM={C:'탄소',H:'수소',O:'산소',N:'질소'},ATOMTIP='실험실에서 화합물을 만드는 원료예요. 자동으로 쌓이지 않아요. 실험실에서 연구점수로 주문해야 하고, 주문할수록 비싸져요.',CONDK={cool:'냉각',heat:'가열',catalyst:'촉매'};
-// ---------- 소리 (Web Audio 합성, 한 소리 0.8초 이하, 작은 음량) ----------
-var SFXLOG=[],lastSfx=0;
-function vo(t,f,d,ty,pk,f2,lp){var o=AC.createOscillator(),g=AC.createGain(),x=o;o.type=ty||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(pk||.06,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+d);
-  if(lp){var l=AC.createBiquadFilter();l.type='lowpass';l.frequency.value=lp;o.connect(l);l.connect(g);}else o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.02);}
+// ---------- 소리 (Kenney 표본을 재생하고, 표본을 풀지 못하면 직접 합성한 소리로 대신해요. 한 소리 1초 이하, 크기는 make-sfx.js 의 목표값) ----------
+var SFXLOG=[],lastSfx=0,SFXVIA=[],SBUF={},SFXGAIN=1,VC=null,redec=true; // SFXGAIN: 표본 전체의 크기 손잡이, VC: 합성 소리를 낼 컨텍스트(play 가 정해요)
+function vo(t,f,d,ty,pk,f2,lp){var o=VC.createOscillator(),g=VC.createGain(),x=o;o.type=ty||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(pk||.06,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  if(lp){var l=VC.createBiquadFilter();l.type='lowpass';l.frequency.value=lp;o.connect(l);l.connect(g);}else o.connect(g);g.connect(VC.destination);o.start(t);o.stop(t+d+.02);}
 var SFX={
  tap:function(t){vo(t,620,.05,'triangle',.05);},
  start:function(t){vo(t,523,.18,'triangle',.06);vo(t+.09,784,.25,'triangle',.06);},
@@ -29,9 +29,13 @@ var SFX={
  fail:function(t){vo(t,440,.18,'triangle',.06);vo(t+.16,330,.3,'triangle',.06);},
  win:function(t){[523,659,784,1047].forEach(function(f,i){vo(t+i*.1,f,.15,'sine',.06);});vo(t+.4,1319,.38,'sine',.06);},
  lose:function(t){vo(t,392,.2,'triangle',.06,0,900);vo(t+.2,330,.2,'triangle',.06,0,900);vo(t+.4,262,.35,'triangle',.06,0,900);}};
-function sfx(n){lastSfx=performance.now();SFXLOG.push(n);if(SFXLOG.length>20)SFXLOG.shift();if(muted||!AC||!SFX[n])return;try{rs();SFX[n](AC.currentTime+.01);}catch(e){}}
+function play(c,n,t){var b=SBUF[n];if(b){var s=c.createBufferSource(),g=c.createGain();s.buffer=b;g.gain.value=SFXGAIN;s.connect(g);g.connect(c.destination);s.start(t);return 'sample';}if(SFX[n]){VC=c;SFX[n](t);return 'synth';}return 'off';}
+function sfx(n){lastSfx=performance.now();SFXLOG.push(n);if(SFXLOG.length>20)SFXLOG.shift();var p='off';if(!muted&&AC)try{rs();p=play(AC,n,AC.currentTime+.01);}catch(e){p='off';}SFXVIA.push(n+':'+p);if(SFXVIA.length>20)SFXVIA.shift();}
+// 표본 풀기: 어떤 실패도 밖으로 새지 않아요 (예외도, 잡히지 않은 거부도 없어요)
+function decodeAll(C){if(typeof SFXDATA==='undefined'||!SFXDATA)return;Object.keys(SFXDATA).forEach(function(n){if(SBUF[n])return;try{var a=atob(SFXDATA[n]),u=new Uint8Array(a.length),i,no=function(){},p;for(i=0;i<a.length;i++)u[i]=a.charCodeAt(i);p=C.decodeAudioData(u.buffer,function(b){if(b)SBUF[n]=b;},no);if(p&&p.catch)p.catch(no);}catch(e){}});}
+try{var OC=window.OfflineAudioContext||window.webkitOfflineAudioContext;decodeAll(new OC(1,44100,44100));}catch(e){} // 사용자 조작 전에 AudioContext 를 만들면 경고가 떠서, 오프라인 컨텍스트로 풀어요. 못 푼 자리는 첫 조작에서 wake 가 AC 로 한 번 더 풀어요
 function rs(){if(AC.state==='suspended'){var p=AC.resume();if(p&&p.catch)p.catch(function(){});}}
-function wake(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();rs();}catch(e){}}
+function wake(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();rs();if(redec){redec=false;decodeAll(AC);}}catch(e){}}
 ['pointerdown','touchend','keydown'].forEach(function(n){addEventListener(n,wake,{capture:true,passive:true});});
 document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('button,[role=button],summary,.bub')&&performance.now()-lastSfx>40)sfx('tap');
   var bt=e.target&&e.target.closest&&e.target.closest('button,.st,summary'); // 마우스나 터치로 누른 버튼, 약 성능 줄, 요약 줄은 포커스를 풀어, 스페이스가 멈춤과 계속으로 동작하게 해요
@@ -358,7 +362,7 @@ function menuDo(k){
   else if(k==='home')dlg('처음 화면으로 갈까요?','지금 판은 끝나요. 난이도와 회사를 다시 골라요.',[['취소',null,1],['처음 화면으로',goHome]]);
   else if(k==='snd'){muted=!muted;try{localStorage.setItem('neuroinc.mute',muted?'1':'0');}catch(e){}renderMenu();var s=$('#menuBox [data-m=snd]');if(s)s.focus();}
   else if(k==='help'){closeMenu(true);coach(0);}
-  else if(k==='about')dlg('출처와 안내','글꼴은 Noto Sans KR이고 SIL Open Font License 1.1로 쓸 수 있어요. Google Fonts에서 불러와요.\n게임의 틀은 Plague Inc.(Ndemic Creations)를 참고했어요. 그 회사와는 관련이 없어요.\n수치는 교육용으로 단순화한 값이에요. 실제 치료 판단에 쓰면 안 돼요.\n사건 카드는 실제 사례에서 영감을 받은 가상 이야기예요.',[['닫기']]);}
+  else if(k==='about')dlg('출처와 안내','글꼴은 Noto Sans KR이고 SIL Open Font License 1.1로 쓸 수 있어요. Google Fonts에서 불러와요.\n효과음은 Kenney(kenney.nl)의 Interface Sounds와 Music Jingles예요. Creative Commons Zero로 공개되어 누구나 쓸 수 있어요.\n게임의 틀은 Plague Inc.(Ndemic Creations)를 참고했어요. 그 회사와는 관련이 없어요.\n수치는 교육용으로 단순화한 값이에요. 실제 치료 판단에 쓰면 안 돼요.\n사건 카드는 실제 사례에서 영감을 받은 가상 이야기예요.',[['닫기']]);}
 $('#bMenu').onclick=openMenu;
 // 판이 바뀔 때 모든 화면 상태를 처음 값으로 되돌려요. 영구 설정(소리 끔, 한 번 본 안내 기록)과 디버그 소리 기록은 그대로 둬요
 function resetUi(){
@@ -534,7 +538,10 @@ function frame(t){
   last=t;requestAnimationFrame(frame);
 }
 requestAnimationFrame(function(t){last=t;frame(t);});
-window.__dbg={get st(){return st;},simulate:simulate,get sfxLog(){return SFXLOG.slice();},get ac(){return AC;},
+window.__dbg={get st(){return st;},simulate:simulate,get sfxLog(){return SFXLOG.slice();},get ac(){return AC;},get sfxVia(){return SFXVIA.slice();},sbuf:SBUF,
+  render:function(n){return new Promise(function(ok,no){var OC=window.OfflineAudioContext||window.webkitOfflineAudioContext,c=new OC(1,88200,44100),p=play(c,n,0);c.startRendering().then(function(buf){var x=buf.getChannelData(0),pk=0,a=0,b,i,sq=0;for(i=0;i<x.length;i++)if(Math.abs(x[i])>pk)pk=Math.abs(x[i]);
+    if(!pk)return ok({path:p,lead:0,dur:0,peak:-99,rms:-99});while(Math.abs(x[a])<pk*.01)a++;b=x.length-1;while(Math.abs(x[b])<pk*.01)b--;for(i=a;i<=b;i++)sq+=x[i]*x[i];
+    ok({path:p,lead:Math.round(a/441*10),dur:+((b+1)/44100).toFixed(3),peak:+(20*Math.log10(pk)).toFixed(1),rms:+(10*Math.log10(sq/(b-a+1))).toFixed(1)});},no);});},
   advance:function(w){var end=st.week+w,dt=.1*K.WEEKS_PER_SEC;while(st.week<end&&!st.event&&!st.over)step(st,Math.min(dt,end-st.week));return st.week;},
   paint:function(){if(st.event&&!evOpen)showEvent();paint();tipCheck();if(st.over)showEnd();}};
 function fit(){var s=Math.min(innerWidth/1440,innerHeight/900);$('#stage').style.transform='translate('+((innerWidth-1440*s)/2)+'px,'+((innerHeight-900*s)/2)+'px) scale('+s+')';
