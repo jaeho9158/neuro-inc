@@ -760,7 +760,7 @@ function fm(f){return String(f).replace(/\d+/g,'<sub>$&</sub>');} // 분자식�
 try{muted=localStorage.getItem('neuroinc.mute')==='1';}catch(e){}
 var ATOM={C:'탄소',H:'수소',O:'산소',N:'질소'},ATOMTIP='실험실에서 화합물을 만드는 원료예요. 자동으로 쌓이지 않아요. 실험실에서 연구점수로 주문해야 하고, 주문할수록 비싸져요.',CONDK={cool:'냉각',heat:'가열',catalyst:'촉매'};
 // ---------- 소리 (Kenney 표본을 재생하고, 표본을 풀지 못하면 직접 합성한 소리로 대신해요. 한 소리 1초 이하, 크기는 make-sfx.js 의 목표값) ----------
-var SFXLOG=[],lastSfx=0,SFXVIA=[],SBUF={},SFXGAIN=1,VC=null,redec=true; // SFXGAIN: 표본 전체의 크기 손잡이, VC: 합성 소리를 낼 컨텍스트(play 가 정해요)
+var SFXLOG=[],lastSfx=0,SFXVIA=[],SBUF={},SFXGAIN=.7071,VC=null,redec=true; // SFXGAIN: 표본 전체의 크기 손잡이. 표본은 한 채널로 재서 맞췄는데 재생은 양쪽 스피커로 같은 소리가 나가 3 LU 커지므로 .7071(-3 dB)로 되돌려요. VC: 합성 소리를 낼 컨텍스트(play 가 정해요)
 function vo(t,f,d,ty,pk,f2,lp){var o=VC.createOscillator(),g=VC.createGain(),x=o;o.type=ty||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(pk||.06,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+d);
   if(lp){var l=VC.createBiquadFilter();l.type='lowpass';l.frequency.value=lp;o.connect(l);l.connect(g);}else o.connect(g);g.connect(VC.destination);o.start(t);o.stop(t+d+.02);}
 var SFX={
